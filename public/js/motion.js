@@ -55,7 +55,7 @@
         start: 'top 92%',
         once: true,
         onEnter: function (batch) {
-          gsap.to(batch, { y: 0, opacity: 1, duration: 0.7, stagger: 0.07, ease: 'power3.out', overwrite: true, clearProps: 'transform' });
+          gsap.to(batch, { y: 0, opacity: 1, duration: 0.55, stagger: 0.05, ease: 'power3.out', overwrite: true, clearProps: 'transform' });
         },
       });
     });

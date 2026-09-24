@@ -1,0 +1,38 @@
+# Production on a single server (VPS) with automatic HTTPS.
+#   1. Point your domain's DNS (A record) at the server's IP address.
+#   2. cp .env.example .env   and fill it in (DOMAIN, SESSION_SECRET, ADMIN_*, alerts).
+#   3. docker compose up -d --build
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATA_DIR: /data
+      PUBLIC_URL: https://${DOMAIN:?Set DOMAIN in .env}
+    volumes:
+      - lionheart-data:/data
+    expose:
+      - "3000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  lionheart-data:
+  caddy-data:
+  caddy-config:

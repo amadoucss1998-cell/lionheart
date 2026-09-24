@@ -400,3 +400,7 @@ table.table { width: 100%; border-collapse: collapse; background: #fff; }
   .kv dt { margin-top: 6px; }
   .cta-band { padding: 22px; }
 }
+
+/* Grid children must be allowed to shrink below their content width, otherwise
+   horizontally scrolling rows (filter chips, tables) widen the page on phones. */
+.catalog > *, .cart-layout > *, .admin-grid > *, .product-layout > * { min-width: 0; }

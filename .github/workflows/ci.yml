@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t lionheart-trade .
+      - name: Start container and check health
+        run: |
+          docker run -d --name lh -p 3000:3000 -e SESSION_SECRET=ci -e ADMIN_PASSWORD=ci-password-123 lionheart-trade
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:3000/healthz; then break; fi
+            sleep 1
+          done
+          curl -fsS http://localhost:3000/healthz
+          curl -fsS http://localhost:3000/products | grep -q "Porcelain Floor Tile"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Browser end-to-end test against the container
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+          BASE_URL=http://localhost:3000 ADMIN_EMAIL=admin@lionheartgroup.info ADMIN_PASSWORD=ci-password-123 npm run test:e2e
+      - name: Container logs
+        if: always()
+        run: docker logs lh

@@ -95,35 +95,104 @@ TWILIO_CONTENT_SID=HXxxxxxxxx             # approved template (recommended)
 - Animations are turned off for visitors with *reduced motion* enabled. Without WebGL the globe falls back to the static gradient.
 - The layout is responsive and mobile-first. A WhatsApp button appears on every page.
 
-## Running it
+## Running it on your computer
 
 Requires **Node.js 22+**.
 
 ```bash
 npm install
-ADMIN_EMAIL=you@yourcompany.com ADMIN_PASSWORD='a-strong-password' SESSION_SECRET='long-random-string' npm start
-# open http://localhost:3000, admin at http://localhost:3000/admin
+npm start          # http://localhost:3000, admin at /admin
 ```
 
-On first start, the system creates the admin account. If `ADMIN_PASSWORD` is not set, it generates a random password and prints it to the console once. It also loads **sample products** so the catalog isn't empty. Their prices are only illustrative, so edit or delete them before going live. Set `SEED_DEMO=false` to start with an empty catalog.
+On first start, the system creates the admin account. If `ADMIN_PASSWORD` is not set, it generates a random password and prints it in the terminal once. It also loads **sample products** so the catalog isn't empty. Their prices are only illustrative, so replace them before going live. Set `SEED_DEMO=false` to start with an empty catalog.
+
+## Deploying
+
+The site is one Node.js app with a SQLite database file. **Everything it stores lives in one folder, `/data`**: the database and uploaded photos. Keep that folder on a persistent disk and back it up.
+
+### Option 1: Your own server (VPS) with Docker. Recommended.
+
+A small server is enough: 1 CPU and 1–2 GB RAM, for example DigitalOcean, Hetzner, AWS Lightsail or Contabo, running Ubuntu 22.04 or 24.04. HTTPS is automatic through Caddy.
+
+1. **Point your domain at the server.** In your DNS, create an `A` record, for example `shop.lionheartgroup.info`, pointing to the server's IP address. Optionally add `www.shop…` too.
+2. **Install Docker** on the server: `curl -fsSL https://get.docker.com | sh`
+3. **Get the code and configure it:**
+   ```bash
+   git clone https://github.com/amadoucss1998-cell/lionheart.git && cd lionheart
+   cp .env.example .env
+   nano .env        # set DOMAIN, SESSION_SECRET (openssl rand -hex 32), ADMIN_PASSWORD, alerts
+   ```
+4. **Start it:** `docker compose up -d --build`
+5. Open `https://your-domain` and sign in at `/admin` with `ADMIN_EMAIL` / `ADMIN_PASSWORD`.
+
+Day-to-day commands:
+
+```bash
+docker compose logs -f app                 # view logs
+git pull && docker compose up -d --build   # update to the latest version
+docker compose exec app npm run backup     # back up the database now
+```
+
+**Nightly backups.** Add this line to the server's crontab (`crontab -e`). It keeps the last 30 backups inside the data volume:
+`0 2 * * * cd /root/lionheart && docker compose exec -T app npm run backup`.
+Also copy them off the server now and then, together with the uploaded photos:
+`docker compose cp app:/data ./lionheart-data-copy`.
+
+### Option 2: Render (managed, no server to maintain)
+
+1. Push this repository to GitHub. It's already there.
+2. On <https://render.com>, choose **New → Blueprint** and select the repository. `render.yaml` creates the web service with a 5 GB persistent disk and a generated `SESSION_SECRET`.
+3. Fill in `PUBLIC_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` and the alert settings when asked. Then add your domain under **Settings → Custom Domains**.
+
+A persistent disk needs a paid plan (Starter). Railway and Fly.io also work with the included `Dockerfile`, as long as you attach a volume at `/data`.
+
+### Option 3: Without Docker
+
+On a server with Node.js 22+: `npm ci --omit=dev`, create `.env` from `.env.example`, run `NODE_ENV=production npm start`, and put Nginx or Caddy in front for HTTPS. The app reads `.env` automatically. Use a process manager (systemd or pm2) so it restarts after reboots.
+
+### Configuration
 
 | Variable | Default | Purpose |
 |---|---|---|
 | `PORT` | `3000` | HTTP port |
-| `SESSION_SECRET` | random per start | Signs login cookies. **Set this in production**, or everyone is logged out on each restart. |
+| `SESSION_SECRET` | random per start | Signs login cookies. **Required in production.** |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | `admin@lionheartgroup.info` / generated | First admin account |
 | `DATA_DIR` | `./data` | SQLite database and uploaded photos. **Back this folder up.** |
-| `COOKIE_SECURE` | `false` | Set to `true` when served over HTTPS |
 | `SEED_DEMO` | `true` | Load sample categories and products on first start |
 | `PUBLIC_URL` | from request | Your site's address, used for links in alerts |
 | `SMTP_*`, `MAIL_FROM`, `WHATSAPP_*`, `TWILIO_*`, `CALLMEBOT_RECIPIENTS` | unset | Alert channels (see above) |
+| `NODE_ENV` | `development` | Set to `production` on the live server. It refuses to start without `SESSION_SECRET`. |
+| `COOKIE_SECURE` | `true` if `PUBLIC_URL` is https | Force secure cookies on or off |
+| `RATE_LIMIT` | on | Set to `off` to disable the sign-in and form limits (not recommended) |
 
-Run the tests with `npm test`.
+### Go-live checklist
+
+- [ ] `DOMAIN` / `PUBLIC_URL` point to your real domain and HTTPS works
+- [ ] `SESSION_SECRET` is a long random value and `ADMIN_PASSWORD` is strong. Change the password again after the first sign-in (**My profile**).
+- [ ] Sample products are deleted or replaced with real ones and real prices
+- [ ] **Settings:** China and Dubai addresses, phone, WhatsApp number, currency and payment instructions are correct
+- [ ] Email and/or WhatsApp alerts are set up, and **Send a test alert** arrives
+- [ ] Place one test order from a phone, quote it in the admin, accept it, then cancel it
+- [ ] Nightly backups are scheduled
+- [ ] Team members have their own staff accounts (**Customers & team**)
+
+## Testing
+
+```bash
+npm test          # 18 server tests: ordering, quotations, security, alerts, uploads, CSV import
+npm run test:e2e  # real-browser test (Chromium) of a running site
+```
+
+`test:e2e` works against a local or live site. It checks the 3D home page, runs a customer order (China sourcing and stock), then admin quotation → customer acceptance → shipping update. It also uploads a product with a photo and checks the pages fit on a phone screen. Before the first run, do `npx playwright install chromium`:
+
+```bash
+BASE_URL=https://shop.lionheartgroup.info ADMIN_EMAIL=… ADMIN_PASSWORD=… npm run test:e2e
+```
+
+It places one order named "E2E Test" and cancels it at the end, and deletes the test product it creates.
+
+GitHub Actions (`.github/workflows/ci.yml`) runs on every push. It runs the server tests, builds the Docker image, starts it, checks `/healthz`, and runs the browser test against the container.
 
 ## Tech
 
-Node.js, Express 5, EJS server-rendered pages, SQLite (better-sqlite3), Three.js and GSAP. Every form is protected with CSRF tokens. Passwords are hashed with bcrypt. Uploads are limited to images of 8 MB or less.
-
-## Deploying
-
-The app is a single Node process with a local SQLite file. It runs on any VPS (for example a small DigitalOcean, Hetzner or AWS Lightsail server) behind Nginx or Caddy for HTTPS. It also works on platforms with a persistent disk, such as Render or Railway. Point `DATA_DIR` at the persistent disk.
+Node.js, Express 5, EJS server-rendered pages, SQLite (better-sqlite3), Three.js and GSAP. Every form is protected with CSRF tokens. Passwords are hashed with bcrypt. Uploads are limited to images of 8 MB or less. Rate limiting protects sign-in and public forms. A strict Content-Security-Policy and HSTS are sent, and `/healthz` supports uptime monitoring.

@@ -1,0 +1,39 @@
+# One-click deploy on Render (https://render.com): New → Blueprint → pick this repo.
+# The persistent disk keeps the database and uploaded photos across deploys.
+services:
+  - type: web
+    name: lionheart-trade
+    runtime: docker
+    plan: starter
+    healthCheckPath: /healthz
+    disk:
+      name: lionheart-data
+      mountPath: /data
+      sizeGB: 5
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATA_DIR
+        value: /data
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: PUBLIC_URL
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "465"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      - key: WHATSAPP_PROVIDER
+        sync: false
+      - key: CALLMEBOT_RECIPIENTS
+        sync: false

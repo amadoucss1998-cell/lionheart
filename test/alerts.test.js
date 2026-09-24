@@ -11,6 +11,7 @@ Object.assign(process.env, {
   ADMIN_PASSWORD: 'admin-pass-123',
   SESSION_SECRET: 'test-secret',
   PUBLIC_URL: 'https://shop.lionheart.test',
+  COOKIE_SECURE: 'false',
   WHATSAPP_PROVIDER: 'cloud',
   WHATSAPP_TOKEN: 'test-token',
   WHATSAPP_PHONE_NUMBER_ID: '1234567890',

@@ -4,6 +4,8 @@ const express = require('express');
 const cookieSession = require('cookie-session');
 const compression = require('compression');
 const { locals, csrfGlobal, UPLOAD_DIR } = require('./middleware');
+const { rateLimit } = require('./rate-limit');
+const { db } = require('./db');
 
 function createApp() {
   const app = express();
@@ -11,6 +13,11 @@ function createApp() {
   app.set('views', path.join(__dirname, '..', 'views'));
   app.set('trust proxy', 1);
   app.disable('x-powered-by');
+
+  // Secure cookies and HSTS are switched on when the public address is HTTPS.
+  // COOKIE_SECURE=true/false overrides the automatic choice.
+  const https = /^https:\/\//i.test(process.env.PUBLIC_URL || '');
+  const secureCookies = process.env.COOKIE_SECURE ? process.env.COOKIE_SECURE === 'true' : https;
 
   let secret = process.env.SESSION_SECRET;
   if (!secret) {
@@ -20,13 +27,38 @@ function createApp() {
     }
   }
 
+  const csp = [
+    "default-src 'self'",
+    "script-src 'self'",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src 'self' data: blob:",
+    "connect-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'self'",
+  ].join('; ');
   app.use((req, res, next) => {
     res.set({
+      'Content-Security-Policy': csp,
       'X-Content-Type-Options': 'nosniff',
       'X-Frame-Options': 'SAMEORIGIN',
       'Referrer-Policy': 'strict-origin-when-cross-origin',
+      'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
     });
+    if (https) res.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
     next();
+  });
+
+  // Health check for load balancers, Docker and uptime monitors.
+  app.get('/healthz', (req, res) => {
+    try {
+      db.prepare('SELECT 1').get();
+      res.set('Cache-Control', 'no-store').json({ ok: true });
+    } catch (err) {
+      res.status(503).json({ ok: false });
+    }
   });
   app.use(compression());
   // Front-end libraries are served from node_modules so the site needs no external CDN.
@@ -43,10 +75,19 @@ function createApp() {
       maxAge: 30 * 24 * 60 * 60 * 1000,
       httpOnly: true,
       sameSite: 'lax',
-      secure: process.env.COOKIE_SECURE === 'true',
+      secure: secureCookies,
     })
   );
   app.use(locals);
+
+  // Slow down password guessing, order-number guessing and form spam.
+  const MIN = 60 * 1000;
+  app.post('/login', rateLimit({ windowMs: 15 * MIN, max: 10, message: 'Too many sign-in attempts. Please wait 15 minutes and try again.' }));
+  app.post('/register', rateLimit({ windowMs: 60 * MIN, max: 10 }));
+  app.post('/track', rateLimit({ windowMs: 15 * MIN, max: 20 }));
+  app.post('/checkout', rateLimit({ windowMs: 60 * MIN, max: 20 }));
+  app.post('/request', rateLimit({ windowMs: 60 * MIN, max: 15 }));
+
   app.use(csrfGlobal);
 
   app.use('/', require('./routes/shop'));
