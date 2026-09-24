@@ -90,6 +90,30 @@
       </div></div>
     </div>
   </div>
+  <% if (order.status === 'delivered') { %>
+  <section class="card mt-2" id="review"><div class="card-body">
+    <% if (review) { %>
+      <h2>Your review</h2>
+      <%- include('partials/stars', { rating: review.rating, size: 20 }) %>
+      <p class="prose mt-1 mb-1"><%= review.body %></p>
+      <p class="small muted mb-0"><%= review.status === 'approved' ? 'Published on our website. Thank you!' : 'Thank you! Your review will appear on our website once our team has checked it.' %></p>
+    <% } else { %>
+      <h2>How did we do?</h2>
+      <p class="muted">Your order has been delivered. A short review helps other buyers and helps us improve.</p>
+      <form method="post" action="/orders/<%= order.ref %>/review" class="review-form">
+        <input type="hidden" name="_csrf" value="<%= csrf %>">
+        <fieldset class="star-input">
+          <legend class="sr-only">Your rating</legend>
+          <% for (let i = 5; i >= 1; i--) { %><input type="radio" id="r<%= i %>" name="rating" value="<%= i %>" required><label for="r<%= i %>" title="<%= i %> star<%= i > 1 ? 's' : '' %>"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg><span class="sr-only"><%= i %> stars</span></label><% } %>
+        </fieldset>
+        <div class="field"><label for="review-body">Your review</label><textarea id="review-body" name="body" rows="4" minlength="10" maxlength="1500" required placeholder="What went well? Quality of the goods, communication, delivery time…"></textarea></div>
+        <div class="field" style="max-width:360px"><label for="review-name">Name to show</label><input id="review-name" name="name" type="text" maxlength="80" value="<%= order.customer_name %>"></div>
+        <button class="btn btn-gold" type="submit">Submit review</button>
+      </form>
+    <% } %>
+  </div></section>
+  <% } %>
+
   <% if (!user) { %>
     <div class="alert alert-info mt-2">Create an account with <strong><%= order.email %></strong> to keep all your orders together. <a href="/register?next=/orders/<%= order.ref %>">Create account</a></div>
   <% } %>

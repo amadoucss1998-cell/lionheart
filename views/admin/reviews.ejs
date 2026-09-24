@@ -1,0 +1,40 @@
+<%- include('_header') %>
+<div class="admin-top"><h1>Reviews</h1><span class="muted small">Customers review delivered orders; reviews appear on the website after you approve them.</span></div>
+<div class="admin-grid">
+  <div class="card table-wrap"><table class="table">
+    <thead><tr><th>Review</th><th>From</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    <% if (!items.length) { %><tr><td colspan="4" class="center muted" style="padding:32px">No reviews yet. Customers can review their order once it is marked as delivered, or add a testimonial on the right.</td></tr><% } %>
+    <% items.forEach(r => { %>
+      <tr>
+        <td style="max-width:420px"><%- include('../partials/stars', { rating: r.rating }) %><div class="small mt-1"><%= r.body %></div></td>
+        <td class="small"><strong><%= r.name %></strong><br><span class="muted"><%= [r.company, r.country].filter(Boolean).join(' · ') %></span>
+          <div class="muted"><%= r.source === 'sample' ? 'Sample (demo)' : r.source === 'team' ? 'Added by team' : 'Customer' %><% if (r.order_ref) { %> · <a href="/admin/orders/<%= r.order_ref %>"><%= r.order_ref %></a><% } %></div></td>
+        <td><span class="status <%= r.status === 'approved' ? 'status-delivered' : r.status === 'pending' ? 'status-quoted' : 'status-cancelled' %>"><%= r.status === 'approved' ? 'Published' : r.status === 'pending' ? 'Awaiting approval' : 'Hidden' %></span></td>
+        <td class="right nowrap">
+          <form class="inline-form" method="post" action="/admin/reviews/<%= r.id %>"><input type="hidden" name="_csrf" value="<%= csrf %>">
+            <% if (r.status !== 'approved') { %><button class="btn btn-gold btn-sm" name="action" value="approved">Publish</button><% } else { %><button class="btn btn-ghost btn-sm" name="action" value="hidden">Hide</button><% } %>
+          </form>
+          <form class="inline-form" method="post" action="/admin/reviews/<%= r.id %>" data-confirm="Delete this review permanently?"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-danger btn-sm" name="action" value="delete">Delete</button></form>
+        </td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table></div>
+  <div class="card"><div class="card-body">
+    <h2>Add a testimonial</h2>
+    <p class="small muted">For feedback a real customer gave you by phone, email or WhatsApp. Ask their permission before publishing it.</p>
+    <form method="post" action="/admin/reviews">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <div class="field"><label for="t-name">Customer name</label><input id="t-name" name="name" type="text" required maxlength="80"></div>
+      <div class="grid-2">
+        <div class="field"><label for="t-company">Company</label><input id="t-company" name="company" type="text"></div>
+        <div class="field"><label for="t-country">Country</label><input id="t-country" name="country" type="text"></div>
+      </div>
+      <div class="field"><label for="t-rating">Rating</label><select id="t-rating" name="rating"><option value="5">★★★★★ 5</option><option value="4">★★★★ 4</option><option value="3">★★★ 3</option><option value="2">★★ 2</option><option value="1">★ 1</option></select></div>
+      <div class="field"><label for="t-body">What they said</label><textarea id="t-body" name="body" required maxlength="1500"></textarea></div>
+      <button class="btn btn-gold" type="submit">Publish testimonial</button>
+    </form>
+  </div></div>
+</div>
+<%- include('_footer') %>

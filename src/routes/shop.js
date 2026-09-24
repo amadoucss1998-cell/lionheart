@@ -7,6 +7,7 @@ const { orderForViewer, loadOrderDetail } = require('../orders');
 const notify = require('../notify');
 const { saveImage } = require('../storage');
 const { runInBackground } = require('../background');
+const reviews = require('../reviews');
 
 const router = express.Router();
 const PAGE_SIZE = 24;
@@ -28,7 +29,8 @@ router.get('/', async (req, res) => {
     products: countRows.reduce((sum, r) => sum + r.n, 0),
     categories: res.locals.categoriesNav.length,
   };
-  res.render('home', { title: null, featured, latest, counts, totals, hero3d: true });
+  const testimonials = await reviews.approvedReviews(6);
+  res.render('home', { title: null, featured, latest, counts, totals, testimonials, hero3d: true });
 });
 
 router.get('/products', async (req, res) => {
@@ -200,7 +202,8 @@ router.get('/orders/:ref', async (req, res) => {
     flash(req, 'info', 'Enter your order number and email to view this order.');
     return res.redirect(`/track?ref=${encodeURIComponent(req.params.ref)}`);
   }
-  res.render('order', { title: `Order ${order.ref}`, ...(await loadOrderDetail(order)), placed: Boolean(req.query.placed) });
+  const [detail, review] = await Promise.all([loadOrderDetail(order), reviews.reviewForOrder(order.id)]);
+  res.render('order', { title: `Order ${order.ref}`, ...detail, review, placed: Boolean(req.query.placed) });
 });
 
 router.post('/orders/:ref/accept', async (req, res) => {
@@ -222,6 +225,27 @@ router.post('/orders/:ref/accept', async (req, res) => {
   }
   flash(req, 'success', 'Thank you! Quotation accepted. We will send you the invoice and payment details shortly.');
   res.redirect(`/orders/${order.ref}`);
+});
+
+router.post('/orders/:ref/review', async (req, res) => {
+  const order = await orderForViewer(req, req.params.ref);
+  if (!order) return res.redirect('/track');
+  const rating = toIntOrNull(req.body.rating);
+  const body = trim(req.body.body, 1500);
+  if (order.status !== 'delivered') {
+    flash(req, 'error', 'You can review your order once it has been delivered.');
+  } else if (!rating || rating < 1 || rating > 5 || body.length < 10) {
+    flash(req, 'error', 'Please choose a star rating and write a few words about your experience.');
+  } else if (await reviews.reviewForOrder(order.id)) {
+    flash(req, 'info', 'You have already reviewed this order. Thank you!');
+  } else {
+    await db.run(
+      "INSERT INTO reviews (order_id, name, company, country, rating, body, status, source) VALUES (?, ?, ?, ?, ?, ?, 'pending', 'customer')",
+      [order.id, trim(req.body.name, 80) || order.customer_name, order.company, order.country, rating, body]
+    );
+    flash(req, 'success', 'Thank you for your review! It will appear on our website once our team has checked it.');
+  }
+  res.redirect(`/orders/${order.ref}#review`);
 });
 
 router.get('/track', (req, res) => {

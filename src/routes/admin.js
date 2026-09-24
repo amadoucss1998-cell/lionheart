@@ -538,6 +538,48 @@ router.post('/requests/:ref', async (req, res) => {
   res.redirect(`/admin/requests/${encodeURIComponent(req.params.ref)}`);
 });
 
+// ---------------- Reviews ----------------
+
+router.get('/reviews', async (req, res) => {
+  const items = await db.all(
+    `SELECT r.*, o.ref AS order_ref FROM reviews r LEFT JOIN orders o ON o.id = r.order_id
+     ORDER BY r.status = 'pending' DESC, r.created_at DESC, r.id DESC LIMIT 500`
+  );
+  res.render('admin/reviews', { title: 'Reviews', items });
+});
+
+router.post('/reviews', async (req, res) => {
+  const rating = h.toIntOrNull(req.body.rating);
+  const name = trim(req.body.name, 80);
+  const body = trim(req.body.body, 1500);
+  if (!name || !body || !rating || rating < 1 || rating > 5) {
+    flash(req, 'error', 'Name, rating and the review text are required.');
+  } else {
+    await db.run("INSERT INTO reviews (name, company, country, rating, body, status, source) VALUES (?, ?, ?, ?, ?, 'approved', 'team')", [
+      name,
+      trim(req.body.company, 120) || null,
+      trim(req.body.country, 80) || null,
+      rating,
+      body,
+    ]);
+    flash(req, 'success', `Testimonial from ${name} added and published.`);
+  }
+  res.redirect('/admin/reviews');
+});
+
+router.post('/reviews/:id', async (req, res) => {
+  const id = h.toIntOrNull(req.params.id);
+  const action = req.body.action;
+  if (action === 'delete') {
+    await db.run('DELETE FROM reviews WHERE id = ?', [id]);
+    flash(req, 'success', 'Review deleted.');
+  } else if (['approved', 'hidden', 'pending'].includes(action)) {
+    await db.run('UPDATE reviews SET status = ? WHERE id = ?', [action, id]);
+    flash(req, 'success', action === 'approved' ? 'Review published on the website.' : 'Review hidden from the website.');
+  }
+  res.redirect('/admin/reviews');
+});
+
 // ---------------- Customers & staff ----------------
 
 router.get('/customers', async (req, res) => {
@@ -605,7 +647,7 @@ router.post('/settings/sample-data', requireAdmin, async (req, res) => {
   } else {
     try {
       await demo.loadSampleData(req.user.id);
-      flash(req, 'success', 'Sample data loaded: 5 orders at different stages, 2 sourcing requests and 4 suppliers.');
+      flash(req, 'success', 'Sample data loaded: 5 orders at different stages, 2 sourcing requests, 4 suppliers and 3 sample reviews.');
     } catch (err) {
       flash(req, 'error', err.message);
     }

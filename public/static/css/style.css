@@ -647,3 +647,28 @@ body { background: var(--paper); }
   .tour-facts strong { font-size: 1.9rem; }
   .phone { width: 250px; }
 }
+
+/* ---------- Reviews ---------- */
+.stars { display: inline-flex; gap: 2px; vertical-align: middle; }
+.stars svg { fill: var(--line-strong); }
+.stars svg.on { fill: var(--brass); }
+.rating-summary { display: flex; align-items: center; gap: 14px; }
+.rating-summary strong { font-family: var(--display); font-size: 2.6rem; font-weight: 400; line-height: 1; color: var(--ink); }
+.rating-summary span { display: block; font-size: .82rem; color: var(--muted); margin-top: 3px; }
+.reviews-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+.review { margin: 0; padding: 26px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); display: flex; flex-direction: column; gap: 16px; }
+.review blockquote { margin: 0; font-family: var(--display); font-size: 1.12rem; line-height: 1.5; color: var(--ink); font-variation-settings: "opsz" 36; flex: 1; }
+.review blockquote::before { content: "“"; display: block; font-size: 2.6rem; line-height: .6; color: var(--brass); margin-bottom: 6px; }
+.review figcaption { display: flex; align-items: center; gap: 12px; padding-top: 16px; border-top: 1px solid var(--line); }
+.review figcaption strong { display: block; font-size: .92rem; color: var(--ink); }
+.review figcaption small { color: var(--muted); font-size: .8rem; }
+.avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--ink); color: #e3c27a; display: grid; place-items: center; font-family: var(--mono); font-size: .78rem; flex-shrink: 0; }
+.star-input { border: 0; padding: 0; margin: 4px 0 16px; display: inline-flex; flex-direction: row-reverse; gap: 4px; }
+.star-input input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.star-input label { cursor: pointer; margin: 0; }
+.star-input svg { fill: var(--line-strong); transition: fill .15s, transform .15s; }
+.star-input label:hover svg, .star-input label:hover ~ label svg, .star-input input:checked ~ label svg { fill: var(--brass); }
+.star-input label:hover svg { transform: scale(1.1); }
+.star-input input:focus-visible + label svg { outline: 2px solid var(--brass); outline-offset: 2px; border-radius: 4px; }
+@media (max-width: 1000px) { .reviews-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 760px) { .reviews-grid { grid-template-columns: 1fr; } .review { padding: 22px; } }

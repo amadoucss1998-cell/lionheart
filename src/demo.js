@@ -1,6 +1,7 @@
 // Sample activity for demonstrating the admin (Admin → Settings → Sample data).
 // Every sample record is clearly labelled and removed again in one step:
-// orders LH-SAMPLE-…, requests RQ-SAMPLE-…, suppliers named "… (sample)".
+// orders LH-SAMPLE-…, requests RQ-SAMPLE-…, suppliers named "… (sample)",
+// reviews with source 'sample' (shown on the site with a "Sample" label).
 const { db } = require('./db');
 
 const SUPPLIERS = [
@@ -69,6 +70,18 @@ async function loadSampleData(userId) {
         );
       }
     }
+    // Sample reviews: shown on the website with a "Sample" label.
+    const delivered = await tx.get("SELECT id FROM orders WHERE ref = 'LH-SAMPLE-005'");
+    const sampleReviews = [
+      [delivered ? delivered.id : null, 'Samuel Tarr', 'Tarr Builders', 'Liberia', 5, 'The roofing sheets and security doors arrived exactly as quoted. Lionheart handled the clearing at the port, so we only had to receive the goods on site.'],
+      [null, 'Fatou Jallow', 'Jallow Trading', 'Gambia', 5, 'Being able to follow every stage of the shipment, with the container number, made planning with our customers much easier.'],
+      [null, 'Aminata Sesay', 'Sesay Hotels', 'Sierra Leone', 4, 'Clear quotation within two days and good communication on WhatsApp. The TVs came from their Dubai stock, which saved us weeks.'],
+    ];
+    for (const [orderId, name, company, country, rating, body] of sampleReviews) {
+      await tx.run("INSERT INTO reviews (order_id, name, company, country, rating, body, status, source) VALUES (?, ?, ?, ?, ?, ?, 'approved', 'sample')", [
+        orderId, name, company, country, rating, body,
+      ]);
+    }
     await tx.run(
       `INSERT INTO sourcing_requests (ref, name, email, phone, country, description, quantity, target_price, status)
        VALUES ('RQ-SAMPLE-001', 'Grace Kamara', 'grace@example.com', '+231 880 000 000', 'Liberia', 'Kitchen cabinets for a 24-unit apartment block, white gloss doors, quartz tops.', '24 kitchens', 'USD 1,500 per kitchen', 'new'),
@@ -79,6 +92,7 @@ async function loadSampleData(userId) {
 
 async function removeSampleData() {
   await db.transaction(async (tx) => {
+    await tx.run("DELETE FROM reviews WHERE source = 'sample'");
     await tx.run("DELETE FROM orders WHERE ref LIKE 'LH-SAMPLE-%'");
     await tx.run("DELETE FROM sourcing_requests WHERE ref LIKE 'RQ-SAMPLE-%'");
     await tx.run("DELETE FROM suppliers WHERE name LIKE '% (sample)'");

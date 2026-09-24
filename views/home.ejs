@@ -122,6 +122,31 @@
   </section>
   <% } %>
 
+  <% if (testimonials.items.length) { %>
+  <section class="section">
+    <div class="section-head">
+      <div><span class="kicker">Customer reviews</span><h2>What our customers say</h2></div>
+      <div class="spacer"></div>
+      <div class="rating-summary">
+        <strong><%= testimonials.stats.average.toFixed(1) %></strong>
+        <div><%- include('partials/stars', { rating: testimonials.stats.average, size: 18 }) %><span><%= testimonials.stats.count %> review<%= testimonials.stats.count === 1 ? '' : 's' %></span></div>
+      </div>
+    </div>
+    <div class="reviews-grid">
+      <% testimonials.items.forEach(r => { %>
+        <figure class="review">
+          <div class="row" style="gap:10px"><%- include('partials/stars', { rating: r.rating }) %><% if (r.source === 'sample') { %><span class="tag tag-muted" title="Example review for this demo">Sample</span><% } %></div>
+          <blockquote><%= r.body %></blockquote>
+          <figcaption>
+            <span class="avatar" aria-hidden="true"><%= r.name.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase() %></span>
+            <span><strong><%= r.name %></strong><small><%= [r.company, r.country].filter(Boolean).join(' · ') %></small></span>
+          </figcaption>
+        </figure>
+      <% }) %>
+    </div>
+  </section>
+  <% } %>
+
   <section class="section faq-section">
     <div class="faq-layout">
       <div>
