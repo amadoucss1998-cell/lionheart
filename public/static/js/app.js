@@ -39,8 +39,23 @@
   });
 
   // Admin sidebar toggle on mobile
+  // Admin menu on phones: open with the menu button; close with the ✕ button,
+  // by tapping outside it, with Escape, or by following a link.
   var toggle = document.querySelector('[data-toggle-side]');
-  if (toggle) toggle.addEventListener('click', function () { document.querySelector('.admin-side').classList.toggle('open'); });
+  var side = document.querySelector('.admin-side');
+  var backdrop = document.querySelector('.admin-backdrop');
+  if (toggle && side) {
+    var setOpen = function (open) {
+      side.classList.toggle('open', open);
+      if (backdrop) backdrop.hidden = !open;
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      document.body.style.overflow = open ? 'hidden' : '';
+    };
+    toggle.addEventListener('click', function () { setOpen(!side.classList.contains('open')); });
+    document.querySelectorAll('[data-close-side]').forEach(function (el) { el.addEventListener('click', function () { setOpen(false); }); });
+    side.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { setOpen(false); }); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && side.classList.contains('open')) setOpen(false); });
+  }
 
   // Quote calculator in admin order page
   var qf = document.querySelector('[data-quote-form]');

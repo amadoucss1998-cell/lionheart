@@ -12,9 +12,11 @@
   ['/admin/customers', 'Customers & team', 'user'],
 ];
 const isActive = (href) => href === '/admin' ? path === '/admin' : path === href || (path.startsWith(href + '/') && path !== '/admin/products/new'); %>
-<div class="admin-mobile-bar"><button type="button" data-toggle-side aria-label="Menu"><%- icon('menu', 24) %></button><strong>Lionheart Admin</strong></div>
+<div class="admin-mobile-bar"><button type="button" data-toggle-side aria-label="Open menu" aria-controls="admin-menu" aria-expanded="false"><%- icon('menu', 24) %></button><strong>Lionheart Admin</strong></div>
+<div class="admin-backdrop" data-close-side hidden></div>
 <div class="admin-shell">
-  <aside class="admin-side">
+  <aside class="admin-side" id="admin-menu">
+    <button type="button" class="admin-side-close" data-close-side aria-label="Close menu"><%- icon('close', 22) %></button>
     <a class="logo" href="/admin"><img src="/static/img/logo-white.png" alt="Lionheart"></a>
     <% nav.forEach(([href, label, ic]) => { %>
       <a href="<%= href %>" class="<%= isActive(href) ? 'active' : '' %>"><%- icon(ic, 18) %> <%= label %></a>
