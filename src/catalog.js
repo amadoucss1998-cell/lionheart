@@ -2,7 +2,8 @@ const { db } = require('./db');
 
 const PRODUCT_SELECT = `
   SELECT p.*, c.name AS category_name, c.slug AS category_slug, c.icon AS category_icon,
-    (SELECT filename FROM product_images i WHERE i.product_id = p.id ORDER BY sort_order, id LIMIT 1) AS image
+    (SELECT filename FROM product_images i WHERE i.product_id = p.id ORDER BY sort_order, id LIMIT 1) AS image,
+    (SELECT COALESCE(thumb, filename) FROM product_images i WHERE i.product_id = p.id ORDER BY sort_order, id LIMIT 1) AS thumb
   FROM products p LEFT JOIN categories c ON c.id = p.category_id`;
 
 async function listProducts({ q, category, mode, featured, sort, limit = 24, offset = 0, includeInactive = false } = {}) {

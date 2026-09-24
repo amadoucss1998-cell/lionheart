@@ -43,10 +43,10 @@
 <% if (settings.whatsapp) { %>
 <a class="wa-float" href="https://wa.me/<%= settings.whatsapp.replace(/\D/g, '') %>" target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp"><%- icon('chat', 26) %></a>
 <% } %>
-<script src="/vendor/gsap/gsap.min.js"></script>
-<script src="/vendor/gsap/ScrollTrigger.min.js"></script>
-<script src="<%= asset('/static/js/app.js') %>"></script>
-<script src="<%= asset('/static/js/motion.js') %>"></script>
+<script src="/vendor/gsap/gsap.min.js" defer></script>
+<script src="/vendor/gsap/ScrollTrigger.min.js" defer></script>
+<script src="<%= asset('/static/js/app.js') %>" defer></script>
+<script src="<%= asset('/static/js/motion.js') %>" defer></script>
 
 </body>
 </html>

@@ -4,7 +4,7 @@ const { db, getSettings, setSetting, DEFAULT_SETTINGS } = require('../db');
 const { upload, csvUpload, withUpload, flash, requireStaff, requireAdmin, clearCatalogCache } = require('../middleware');
 const { listProducts, getProduct } = require('../catalog');
 const { loadOrderDetail } = require('../orders');
-const { saveImages, removeImage } = require('../storage');
+const { saveImageWithThumb, removeImage } = require('../storage');
 const h = require('../helpers');
 const notify = require('../notify');
 const demo = require('../demo');
@@ -95,10 +95,10 @@ async function validateProduct(p, id) {
 
 async function addImages(productId, files) {
   if (!files || !files.length) return;
-  const stored = await saveImages(files, 'products');
+  const stored = await Promise.all(files.map((f) => saveImageWithThumb(f, 'products')));
   const { n: start } = await db.get('SELECT COALESCE(MAX(sort_order), -1) + 1 AS n FROM product_images WHERE product_id = ?', [productId]);
-  for (const [i, filename] of stored.entries()) {
-    await db.run('INSERT INTO product_images (product_id, filename, sort_order) VALUES (?, ?, ?)', [productId, filename, start + i]);
+  for (const [i, { filename, thumb }] of stored.entries()) {
+    await db.run('INSERT INTO product_images (product_id, filename, thumb, sort_order) VALUES (?, ?, ?, ?)', [productId, filename, thumb, start + i]);
   }
 }
 
@@ -155,7 +155,7 @@ router.post('/products/:id', ...withUpload(upload.array('images', 12)), async (r
     const img = await db.get('SELECT * FROM product_images WHERE id = ? AND product_id = ?', [imgId, existing.id]);
     if (img) {
       await db.run('DELETE FROM product_images WHERE id = ?', [img.id]);
-      await removeImage(img.filename);
+      await Promise.all([removeImage(img.filename), removeImage(img.thumb)]);
     }
   }
   const mainId = h.toIntOrNull(req.body.main_image);
@@ -200,7 +200,7 @@ router.post('/products/:id/delete', async (req, res) => {
   const product = await getProduct({ id: h.toIntOrNull(req.params.id) });
   if (product) {
     await db.run('DELETE FROM products WHERE id = ?', [product.id]);
-    await Promise.all(product.images.map((img) => removeImage(img.filename)));
+    await Promise.all(product.images.flatMap((img) => [removeImage(img.filename), removeImage(img.thumb)]));
     flash(req, 'success', `Deleted "${product.name}". Past orders keep their copy of the product name.`);
   }
   res.redirect('/admin/products');

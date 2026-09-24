@@ -48,6 +48,7 @@ async function menuCategories() {
 }
 function clearCatalogCache() {
   menuCache = null;
+  require('./cache').clearCache();
 }
 
 function siteUrlFor(req) {

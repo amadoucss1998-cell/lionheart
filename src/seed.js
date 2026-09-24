@@ -98,8 +98,8 @@ async function ensureAdmin() {
   console.log('==============================================\n');
 }
 
-// SKUs that have a product photo (AI-generated, see scripts/stock-photos.json).
-const PHOTO_SKUS = Object.keys(require('../scripts/stock-photos.json'));
+// SKUs that have a product photo (AI-generated, see src/stock-photos.json).
+const PHOTO_SKUS = Object.keys(require('./stock-photos.json'));
 
 // Sample products to create: only those with a photo, unless SEED_DEMO=all
 // (used by the tests and handy for local development).
@@ -200,6 +200,12 @@ function stockPhotoFor(sku) {
 async function attachStockPhotos() {
   const skus = PRODUCTS.map((p) => p[2]).filter((sku) => stockPhotoFor(sku));
   if (!skus.length) return;
+  // Stock photos attached before thumbnails existed get their thumbnail now.
+  await db.run(
+    `UPDATE product_images SET thumb = replace(filename, '.jpg', '-thumb.webp')
+     WHERE thumb IS NULL AND filename IN (${skus.map(() => '?').join(', ')})`,
+    skus.map((sku) => stockPhotoFor(sku))
+  );
   await db.transaction(async (tx) => {
     await tx.run('SELECT pg_advisory_xact_lock(727277)');
     const row = await tx.get("SELECT value FROM settings WHERE key = 'stock_photos_attached'");
@@ -218,7 +224,8 @@ async function attachStockPhotos() {
       todo
     );
     for (const p of missing) {
-      await tx.run('INSERT INTO product_images (product_id, filename, sort_order) VALUES (?, ?, 0)', [p.id, stockPhotoFor(p.sku)]);
+      const photo = stockPhotoFor(p.sku);
+      await tx.run('INSERT INTO product_images (product_id, filename, thumb, sort_order) VALUES (?, ?, ?, 0)', [p.id, photo, photo.replace(/\.jpg$/, '-thumb.webp')]);
     }
     await tx.run(
       "INSERT INTO settings (key, value) VALUES ('stock_photos_attached', ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value",

@@ -78,6 +78,21 @@ async function saveImages(files, folder) {
   return Promise.all((files || []).map((f) => saveImage(f, folder)));
 }
 
+// Saves a photo plus a small WebP thumbnail (600px wide) for product cards.
+// If the thumbnail cannot be made, the full photo is used everywhere.
+async function saveImageWithThumb(file, folder = 'products') {
+  const filename = await saveImage(file, folder);
+  let thumb = null;
+  try {
+    const sharp = require('sharp');
+    const buffer = await sharp(file.buffer).rotate().resize({ width: 600, height: 450, fit: 'cover' }).webp({ quality: 76 }).toBuffer();
+    thumb = await saveImage({ buffer, mimetype: 'image/webp' }, `${folder}/thumbs`);
+  } catch (err) {
+    console.warn('[storage] thumbnail skipped:', err.message);
+  }
+  return { filename, thumb };
+}
+
 // Deletes a stored image; failures are ignored (the record is already gone).
 async function removeImage(stored) {
   // Bundled stock photos (/static/…) belong to the site, never delete them.
@@ -106,6 +121,7 @@ function imageUrl(stored) {
 module.exports = {
   saveImage,
   saveImages,
+  saveImageWithThumb,
   removeImage,
   imageUrl,
   UPLOAD_DIR,

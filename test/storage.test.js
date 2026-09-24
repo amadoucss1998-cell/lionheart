@@ -46,10 +46,10 @@ after(async () => {
   fs.rmSync(tmp, { recursive: true, force: true });
 });
 
-const png = Buffer.from(
-  '89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d49444154789c6360000002000154a24f5d0000000049454e44ae426082',
-  'hex'
-);
+let png; // a real 800×600 image, made in before()
+before(async () => {
+  png = await require('sharp')({ create: { width: 800, height: 600, channels: 3, background: '#b8892b' } }).png().toBuffer();
+});
 
 test('product photos are stored in a public Supabase bucket', async () => {
   const admin = browser();
@@ -94,6 +94,16 @@ test('product photos are stored in a public Supabase bucket', async () => {
   // The product photo is used for link previews too.
   assert.ok(html.includes(`<meta property="og:image" content="${images[0].filename}">`));
 
+  // Each photo also gets a small WebP thumbnail, used on product cards.
+  const thumbs = await db.all('SELECT thumb FROM product_images WHERE product_id = ?', [p.id]);
+  assert.ok(thumbs.every((t) => /\/lionheart-uploads\/products\/thumbs\/.+\.webp$/.test(t.thumb)));
+  assert.strictEqual(objects.size, 4);
+  const thumbObject = objects.get(`lionheart-uploads/${thumbs[0].thumb.split('/lionheart-uploads/')[1]}`);
+  assert.strictEqual(thumbObject.type, 'image/webp');
+  assert.strictEqual((await require('sharp')(thumbObject.body).metadata()).width, 600);
+  const list = await (await admin.req('/products')).text();
+  assert.ok(list.includes(thumbs[0].thumb) || list.includes(thumbs[1].thumb), 'catalog cards use thumbnails');
+
   // Removing a photo and deleting the product removes the files from storage.
   const edit = await admin.csrf(`/admin/products/${p.id}`);
   const img = await db.get('SELECT id, filename FROM product_images WHERE product_id = ? ORDER BY sort_order LIMIT 1', [p.id]);
@@ -105,7 +115,7 @@ test('product photos are stored in a public Supabase bucket', async () => {
   form.append('active', '1');
   form.append('remove_image', String(img.id));
   await admin.req(`/admin/products/${p.id}`, { method: 'POST', body: form });
-  assert.strictEqual(objects.size, 1);
+  assert.strictEqual(objects.size, 2);
   await admin.post(`/admin/products/${p.id}/delete`, {}, `/admin/products/${p.id}`);
   assert.strictEqual(objects.size, 0);
 });

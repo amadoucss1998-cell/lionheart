@@ -154,7 +154,7 @@ test('admin can create a product with an image and bulk import CSV', async () =>
   await admin.post('/login', { email: 'admin@test.local', password: 'admin-pass-123' }, '/login');
   const token = await admin.csrf('/admin/products/new');
 
-  const png = Buffer.from('89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d49444154789c6360000002000154a24f5d0000000049454e44ae426082', 'hex');
+  const png = await require('sharp')({ create: { width: 800, height: 600, channels: 3, background: '#1b3654' } }).png().toBuffer();
   const fd = new FormData();
   fd.append('_csrf', token);
   fd.append('name', 'Kitchen Cabinet Set');
@@ -171,6 +171,11 @@ test('admin can create a product with an image and bulk import CSV', async () =>
   const img = (await db.get('SELECT * FROM product_images WHERE product_id = ?', [p.id]));
   assert.ok(img && fs.existsSync(path.join(tmp, 'uploads', img.filename)));
   assert.strictEqual((await admin.req(`/uploads/${img.filename}`)).status, 200);
+  // A 600px WebP thumbnail is stored next to it for product cards.
+  assert.match(img.thumb, /\.webp$/);
+  const thumbRes = await admin.req(`/uploads/${img.thumb}`);
+  assert.strictEqual(thumbRes.status, 200);
+  assert.strictEqual((await require('sharp')(Buffer.from(await thumbRes.arrayBuffer())).metadata()).width, 600);
 
   // Multipart without a valid token is rejected and the upload discarded.
   const bad = new FormData();

@@ -8,6 +8,9 @@ const notify = require('../notify');
 const { saveImage } = require('../storage');
 const { runInBackground } = require('../background');
 const reviews = require('../reviews');
+const { cached } = require('../cache');
+
+const CATALOG_TTL = 60 * 1000;
 
 const router = express.Router();
 const PAGE_SIZE = 24;
@@ -19,17 +22,20 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const siteUrl = (req) => `${req.protocol}://${req.get('host')}`;
 
 router.get('/', async (req, res) => {
-  const [featured, latest, countRows] = await Promise.all([
-    listProducts({ featured: true, limit: 8 }),
-    listProducts({ sort: 'newest', limit: 8 }),
-    db.all('SELECT category_id, COUNT(*)::int AS n FROM products WHERE active = 1 GROUP BY category_id'),
-  ]).then(([f, l, c]) => [f.items, l.items, c]);
+  // All home page data in parallel, cached briefly (cleared on admin changes).
+  const [featured, latest, countRows, testimonials] = await cached('home', CATALOG_TTL, () =>
+    Promise.all([
+      listProducts({ featured: true, limit: 8 }).then((r) => r.items),
+      listProducts({ sort: 'newest', limit: 8 }).then((r) => r.items),
+      db.all('SELECT category_id, COUNT(*)::int AS n FROM products WHERE active = 1 GROUP BY category_id'),
+      reviews.approvedReviews(6),
+    ])
+  );
   const counts = Object.fromEntries(countRows.map((r) => [r.category_id, r.n]));
   const totals = {
     products: countRows.reduce((sum, r) => sum + r.n, 0),
     categories: res.locals.categoriesNav.length,
   };
-  const testimonials = await reviews.approvedReviews(6);
   res.render('home', { title: null, featured, latest, counts, totals, testimonials, hero3d: true });
 });
 
@@ -41,10 +47,12 @@ router.get('/products', async (req, res) => {
     mode: ['stock', 'source'].includes(req.query.mode) ? req.query.mode : '',
     sort: trim(req.query.sort, 20),
   };
-  const [{ items, total }, category] = await Promise.all([
-    listProducts({ ...filters, limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE }),
-    filters.category ? db.get('SELECT * FROM categories WHERE slug = ?', [filters.category]) : null,
-  ]);
+  const [{ items, total }, category] = await cached(`list:${JSON.stringify(filters)}:${page}`, CATALOG_TTL, () =>
+    Promise.all([
+      listProducts({ ...filters, limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE }),
+      filters.category ? db.get('SELECT * FROM categories WHERE slug = ?', [filters.category]) : null,
+    ])
+  );
   res.render('products', {
     title: category ? category.name : filters.q ? `Search: ${filters.q}` : 'All products',
     items,
@@ -59,11 +67,15 @@ router.get('/products', async (req, res) => {
 router.get('/category/:slug', (req, res) => res.redirect(301, `/products?category=${encodeURIComponent(req.params.slug)}`));
 
 router.get('/products/:slug', async (req, res) => {
-  const product = await getProduct({ slug: req.params.slug });
+  const slug = String(req.params.slug).slice(0, 120);
+  const [product, relatedAll] = await cached(`product:${slug}`, CATALOG_TTL, async () => {
+    const p = await getProduct({ slug });
+    return [p, p ? (await listProducts({ category: p.category_slug, limit: 5 })).items : []];
+  });
   if (!product || (!product.active && !(req.user && req.user.role !== 'customer'))) {
     return res.status(404).render('error', { title: 'Product not found', message: 'This product is no longer available. Try searching the catalog or send us a sourcing request.' });
   }
-  const related = (await listProducts({ category: product.category_slug, limit: 5 })).items.filter((p) => p.id !== product.id).slice(0, 4);
+  const related = relatedAll.filter((p) => p.id !== product.id).slice(0, 4);
   res.render('product', {
     title: product.name,
     description: [product.short_description, product.category_name && `${product.category_name} from Lionheart: order from China or buy from stock.`].filter(Boolean).join('. '),

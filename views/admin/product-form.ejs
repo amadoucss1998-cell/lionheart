@@ -65,7 +65,7 @@
           <% if (product.images && product.images.length) { %>
             <div class="img-manage mb-2">
               <% product.images.forEach((im, i) => { %>
-                <figure><img src="<%= img(im.filename) %>" alt="">
+                <figure><img src="<%= img(im.thumb || im.filename) %>" alt="" loading="lazy">
                   <figcaption>
                     <label class="check"><input type="radio" name="main_image" value="<%= im.id %>" <%= i === 0 ? 'checked' : '' %>> Main photo</label>
                     <label class="check" style="color:var(--red)"><input type="checkbox" name="remove_image" value="<%= im.id %>"> Remove</label>
