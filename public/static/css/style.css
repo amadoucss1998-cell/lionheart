@@ -603,51 +603,6 @@ body { background: var(--paper); }
 @media (max-width: 1000px) { .faq-layout { grid-template-columns: 1fr; gap: 24px; } }
 @media (max-width: 760px) { .faq summary { font-size: 1.05rem; padding: 16px 36px 16px 0; } }
 
-/* ---------- Platform tour (/tour) ---------- */
-.tour-hero { background: linear-gradient(180deg, var(--paper-2), var(--paper)); padding: 72px 0 56px; border-bottom: 1px solid var(--line); }
-.tour-hero h1 { font-size: clamp(2.4rem, 5vw, 4rem); line-height: 1.04; max-width: 880px; margin: 14px 0 18px; font-weight: 400; }
-.tour-hero h1 em { color: var(--brass-2); }
-.tour-hero .lead { font-size: 1.15rem; color: var(--muted); max-width: 720px; }
-.tour-facts { list-style: none; padding: 0; margin: 44px 0 0; display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line); }
-.tour-facts li { padding: 20px 20px 0 0; }
-.tour-facts li + li { border-left: 1px solid var(--line); padding-left: 20px; }
-.tour-facts strong { display: block; font-family: var(--display); font-size: 2.4rem; font-weight: 400; color: var(--ink); line-height: 1; }
-.tour-facts span { color: var(--muted); font-size: .9rem; }
-.tour-block { display: grid; grid-template-columns: 1fr 1.25fr; gap: 56px; align-items: center; padding: 88px 0 0; }
-.tour-block.reverse .tour-text { order: 2; }
-.tour-text h2 { margin: 10px 0 16px; font-size: clamp(1.7rem, 3vw, 2.4rem); }
-.tour-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; color: var(--muted); }
-.tour-list li { padding-left: 22px; position: relative; }
-.tour-list li::before { content: ""; position: absolute; left: 0; top: .72em; width: 12px; height: 1px; background: var(--brass); }
-.tour-list strong { color: var(--ink); font-weight: 600; }
-.tour-list.compact { margin-top: 16px; gap: 6px; }
-.tour-shot { margin: 0; }
-.tour-shot img { width: 100%; height: auto; border-radius: 14px; border: 1px solid var(--line); box-shadow: var(--shadow-lg); }
-.tour-shot figcaption { font-size: .82rem; color: var(--faint); margin-top: 12px; font-family: var(--mono); letter-spacing: .02em; }
-.tour-mobile { display: grid; grid-template-columns: 340px 1fr; gap: 64px; align-items: center; padding: 88px 0 0; }
-.phone { margin: 0 auto; width: 300px; padding: 12px; border-radius: 44px; background: var(--ink); box-shadow: var(--shadow-lg); }
-.phone img { width: 100%; height: auto; border-radius: 32px; display: block; }
-.tour-tech { padding-top: 96px; }
-.tour-tech h2 { margin: 10px 0 30px; font-size: clamp(1.8rem, 3.2vw, 2.6rem); }
-.tour-tech .service .icon { margin-top: 0; }
-.tour-try { padding-top: 96px; }
-.tour-try h2 { margin: 10px 0 24px; font-size: clamp(1.8rem, 3.2vw, 2.6rem); }
-.tour-steps { counter-reset: t; list-style: none; padding: 0; margin: 0; display: grid; gap: 0; border-top: 1px solid var(--line); max-width: 900px; }
-.tour-steps li { counter-increment: t; padding: 18px 0 18px 64px; border-bottom: 1px solid var(--line); position: relative; color: var(--muted); }
-.tour-steps li::before { content: "0" counter(t); position: absolute; left: 0; top: 16px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line-strong); display: grid; place-items: center; font-family: var(--mono); font-size: .8rem; color: var(--ink); }
-.tour-steps strong { color: var(--ink); }
-@media (max-width: 1000px) {
-  .tour-block, .tour-mobile { grid-template-columns: 1fr; gap: 28px; padding-top: 64px; }
-  .tour-block.reverse .tour-text { order: 0; }
-  .tour-facts { grid-template-columns: 1fr 1fr; }
-  .tour-facts li:nth-child(3) { border-left: 0; padding-left: 0; }
-}
-@media (max-width: 760px) {
-  .tour-hero { padding: 40px 0 36px; }
-  .tour-facts strong { font-size: 1.9rem; }
-  .phone { width: 250px; }
-}
-
 /* ---------- Reviews ---------- */
 .stars { display: inline-flex; gap: 2px; vertical-align: middle; }
 .stars svg { fill: var(--line-strong); }

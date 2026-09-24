@@ -89,8 +89,7 @@ TWILIO_CONTENT_SID=HXxxxxxxxx             # approved template (recommended)
 
 ## Presenting the platform
 
-- **`/tour`**: an unlisted page for clients, not in the menu and hidden from search engines. It shows what the platform does for customers and for the team, with screenshots and a five-minute test drive.
-- **Admin → Settings → Sample data**: loads 5 sample orders (one at each main stage), 2 sourcing requests and 4 suppliers, so the dashboard looks realistic in a demo. Sample records are labelled (`LH-SAMPLE-…`, "(sample)") and removed with one click; real orders are never touched.
+- **Admin → Settings → Sample data**: loads 5 sample orders (one at each main stage), 2 sourcing requests, 4 suppliers and 3 reviews (shown with a "Sample" tag), so the dashboard looks realistic in a demo. Sample records are labelled (`LH-SAMPLE-…`, "(sample)") and removed with one click; real orders are never touched.
 - **Link previews**: sharing any page on WhatsApp or social media shows a branded preview. Product pages use the product's photo.
 
 ## Front end

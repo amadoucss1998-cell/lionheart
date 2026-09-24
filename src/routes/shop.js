@@ -328,11 +328,6 @@ router.get('/sitemap.xml', async (req, res) => {
   res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`);
 });
 
-// Unlisted product tour for presenting the platform to a client.
-router.get('/tour', (req, res) =>
-  res.render('tour', { title: 'Platform tour', description: 'A guided tour of the Lionheart trade platform: customer shop, quotations, order tracking and the team admin.', noindex: true })
-);
-
 router.get('/how-it-works', (req, res) => res.render('how-it-works', { title: 'How it works' }));
 router.get('/contact', (req, res) => res.render('contact', { title: 'Contact us' }));
 
