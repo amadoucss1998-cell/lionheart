@@ -23,7 +23,10 @@ async function locals(req, res, next) {
   const [user, settings, categoriesNav] = await Promise.all([
     req.session.userId ? db.get('SELECT id, name, email, phone, company, country, role FROM users WHERE id = ?', [req.session.userId]) : null,
     getSettings(),
-    db.all('SELECT id, name, slug, icon FROM categories ORDER BY sort_order, name'),
+    db.all(
+      `SELECT id, name, slug, icon, EXISTS (SELECT 1 FROM products p WHERE p.category_id = c.id AND p.active = 1) AS has_products
+       FROM categories c ORDER BY sort_order, name`
+    ),
   ]);
   if (req.session.userId && !user) req.session.userId = null;
   req.user = user || null;
@@ -39,7 +42,9 @@ async function locals(req, res, next) {
   res.locals.icon = icon;
   res.locals.img = storage.imageUrl;
   res.locals.fmt = (v) => helpers.money(v, settings.currency || 'USD');
-  res.locals.categoriesNav = categoriesNav;
+  // Public menus only list categories that have products; forms use them all.
+  res.locals.categoriesAll = categoriesNav;
+  res.locals.categoriesNav = categoriesNav.filter((c) => c.has_products);
   next();
 }
 

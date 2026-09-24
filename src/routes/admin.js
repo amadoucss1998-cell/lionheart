@@ -14,6 +14,7 @@ router.use(requireStaff);
 const trim = (v, max = 4000) => String(v || '').trim().slice(0, max);
 const checkbox = (v) => (v ? 1 : 0);
 const count = async (sql, params) => (await db.get(sql, params)).n;
+const WITHOUT_PHOTOS = 'FROM products p WHERE NOT EXISTS (SELECT 1 FROM product_images i WHERE i.product_id = p.id)';
 
 router.get('/', async (req, res) => {
   const [products, ordersOpen, ordersNew, requestsNew, customers, suppliers, byStatus, recentOrders, recentRequests, alerts] = await Promise.all([
@@ -38,8 +39,11 @@ router.get('/', async (req, res) => {
 router.get('/products', async (req, res) => {
   const q = trim(req.query.q, 100);
   const category = trim(req.query.category, 100);
-  const { items, total } = await listProducts({ q, category, sort: 'newest', limit: 500, includeInactive: true });
-  res.render('admin/products', { title: 'Products', items, total, q, category });
+  const [{ items, total }, { n: withoutPhotos }] = await Promise.all([
+    listProducts({ q, category, sort: 'newest', limit: 500, includeInactive: true }),
+    db.get(`SELECT COUNT(*)::int AS n ${WITHOUT_PHOTOS}`),
+  ]);
+  res.render('admin/products', { title: 'Products', items, total, q, category, withoutPhotos });
 });
 
 async function productFormData() {
@@ -155,6 +159,19 @@ router.post('/products/:id', ...withUpload(upload.array('images', 12)), async (r
   await addImages(existing.id, req.files);
   flash(req, 'success', 'Product saved.');
   res.redirect(`/admin/products/${existing.id}`);
+});
+
+router.post('/products-without-photos/delete', async (req, res) => {
+  const expected = h.toIntOrNull(req.body.count);
+  const { n } = await db.get(`SELECT COUNT(*)::int AS n ${WITHOUT_PHOTOS}`);
+  // The count shown to the admin must still be current, so nothing unexpected is deleted.
+  if (expected === null || expected !== n) {
+    flash(req, 'error', 'The product list changed. Please review it and try again.');
+    return res.redirect('/admin/products');
+  }
+  const { changes } = await db.run(`DELETE ${WITHOUT_PHOTOS}`);
+  flash(req, 'success', `Deleted ${changes} product${changes === 1 ? '' : 's'} without photos. Past orders keep their copy of the product name.`);
+  res.redirect('/admin/products');
 });
 
 router.post('/products/:id/duplicate', async (req, res) => {

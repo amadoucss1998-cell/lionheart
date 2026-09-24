@@ -98,6 +98,35 @@ async function ensureAdmin() {
   console.log('==============================================\n');
 }
 
+// SKUs that have a product photo (AI-generated, see scripts/stock-photos.json).
+const PHOTO_SKUS = Object.keys(require('../scripts/stock-photos.json'));
+
+// Sample products to create: only those with a photo, unless SEED_DEMO=all
+// (used by the tests and handy for local development).
+function sampleProducts() {
+  return process.env.SEED_DEMO === 'all' ? PRODUCTS : PRODUCTS.filter((p) => PHOTO_SKUS.includes(p[2]));
+}
+
+// One-time cleanup for databases seeded before: removes the sample products
+// that have no photo. Only sample SKUs are touched, never products added by
+// staff, and never one that has a photo. Orders keep their copy of the name.
+async function removeSamplesWithoutPhotos() {
+  if (process.env.SEED_DEMO === 'all') return;
+  const skus = PRODUCTS.map((p) => p[2]).filter((sku) => !PHOTO_SKUS.includes(sku));
+  if (!skus.length) return;
+  await db.transaction(async (tx) => {
+    await tx.run('SELECT pg_advisory_xact_lock(727278)');
+    if (await tx.get("SELECT 1 AS ok FROM settings WHERE key = 'samples_without_photos_removed'")) return;
+    const { changes } = await tx.run(
+      `DELETE FROM products p WHERE sku IN (${skus.map(() => '?').join(', ')})
+         AND NOT EXISTS (SELECT 1 FROM product_images i WHERE i.product_id = p.id)`,
+      skus
+    );
+    await tx.run("INSERT INTO settings (key, value) VALUES ('samples_without_photos_removed', ?)", [String(changes)]);
+    if (changes) console.log(`Removed ${changes} sample product(s) without photos.`);
+  });
+}
+
 async function seedCatalog() {
   await db.transaction(async (tx) => {
     await tx.run('SELECT pg_advisory_xact_lock(727276)');
@@ -114,7 +143,7 @@ async function seedCatalog() {
     }
     if (await tx.get('SELECT 1 AS ok FROM products LIMIT 1')) return;
     const catIds = new Map((await tx.all('SELECT id, name FROM categories')).map((c) => [c.name, c.id]));
-    for (const [cat, name, sku, short, unit, moq, chinaPrice, lead, stockPrice, stockQty, location, featured, specs] of PRODUCTS) {
+    for (const [cat, name, sku, short, unit, moq, chinaPrice, lead, stockPrice, stockQty, location, featured, specs] of sampleProducts()) {
       await tx.run(
         `INSERT INTO products (sku, name, slug, category_id, short_description, description, specs, unit, moq,
           sourcing_available, china_price, china_lead_days, stock_available, stock_price, stock_qty, stock_location, featured)
@@ -208,6 +237,7 @@ function bootstrap() {
       await ensureAdmin();
       if (process.env.SEED_DEMO !== 'false') {
         await seedCatalog();
+        await removeSamplesWithoutPhotos();
         await attachStockPhotos();
       }
     })().catch((err) => {
@@ -218,7 +248,7 @@ function bootstrap() {
   return bootPromise;
 }
 
-module.exports = { ensureAdmin, seedCatalog, attachStockPhotos, bootstrap, PRODUCTS };
+module.exports = { ensureAdmin, seedCatalog, attachStockPhotos, removeSamplesWithoutPhotos, bootstrap, PRODUCTS, PHOTO_SKUS };
 
 if (require.main === module) {
   bootstrap()

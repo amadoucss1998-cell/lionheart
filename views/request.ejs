@@ -10,7 +10,7 @@
         <div class="field"><label for="description">What do you need? *</label><textarea id="description" name="description" required rows="5" placeholder="Product name, model, size, colour, specifications, brand, where you will use it…"><%= form.description || '' %></textarea></div>
         <div class="grid-3">
           <div class="field"><label for="category_id">Category</label>
-            <select id="category_id" name="category_id"><option value="">Not sure</option><% categoriesNav.forEach(c => { %><option value="<%= c.id %>" <%= form.category_id == c.id ? 'selected' : '' %>><%= c.name %></option><% }) %></select></div>
+            <select id="category_id" name="category_id"><option value="">Not sure</option><% categoriesAll.forEach(c => { %><option value="<%= c.id %>" <%= form.category_id == c.id ? 'selected' : '' %>><%= c.name %></option><% }) %></select></div>
           <div class="field"><label for="quantity">Quantity</label><input id="quantity" name="quantity" type="text" value="<%= form.quantity || '' %>" placeholder="e.g. 2 containers, 500 sqm"></div>
           <div class="field"><label for="target_price">Target price / budget</label><input id="target_price" name="target_price" type="text" value="<%= form.target_price || '' %>" placeholder="optional"></div>
         </div>

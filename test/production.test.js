@@ -6,6 +6,7 @@ const path = require('path');
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'lh-prod-'));
 Object.assign(process.env, {
+  SEED_DEMO: 'all',
   NODE_ENV: 'production',
   DATA_DIR: tmp,
   ADMIN_EMAIL: 'admin@test.local',

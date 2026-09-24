@@ -68,7 +68,8 @@ p { margin: 0 0 1em; }
 .menu-toggle { display: none; background: none; border: 0; color: var(--navy); padding: 8px; cursor: pointer; }
 
 .catnav { background: var(--navy); }
-.catnav .container { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+/* Desktop: links wrap onto a second line instead of being cut off. */
+.catnav .container { display: flex; flex-wrap: wrap; gap: 2px; }
 .catnav .container::-webkit-scrollbar { display: none; }
 .catnav a { color: #dbe4ee; padding: 10px 12px; white-space: nowrap; font-size: .87rem; display: flex; gap: 6px; align-items: center; border-bottom: 3px solid transparent; }
 .catnav a:hover, .catnav a.active { color: #fff; border-bottom-color: var(--gold); }
@@ -374,6 +375,10 @@ table.table { width: 100%; border-collapse: collapse; background: #fff; }
 }
 @media (max-width: 760px) {
   body { font-size: 15px; }
+  /* Phones: one swipeable row, with a fade on the right showing there is more. */
+  .catnav { position: relative; }
+  .catnav .container { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-right: 40px; }
+  .catnav::after { content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 40px; pointer-events: none; background: linear-gradient(90deg, rgba(23, 50, 79, 0), var(--navy)); }
   .container { padding-left: 18px; padding-right: 18px; }
   .page { padding-top: 20px; padding-bottom: 40px; }
   .topbar .hubs { display: none; }

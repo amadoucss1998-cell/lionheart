@@ -9,6 +9,7 @@ process.env.DATA_DIR = tmp;
 process.env.ADMIN_EMAIL = 'admin@test.local';
 process.env.ADMIN_PASSWORD = 'admin-pass-123';
 process.env.SESSION_SECRET = 'test-secret';
+process.env.SEED_DEMO = 'all';
 
 require('./helpers').useTestDatabase();
 const { bootstrap } = require('../src/seed');

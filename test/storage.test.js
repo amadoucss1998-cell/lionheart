@@ -18,6 +18,7 @@ before(async () => {
   await new Promise((r) => fake.listen(0, '127.0.0.1', r));
   supabaseUrl = `http://127.0.0.1:${fake.address().port}`;
   Object.assign(process.env, {
+  SEED_DEMO: 'all',
     DATA_DIR: tmp,
     ADMIN_EMAIL: 'admin@test.local',
     ADMIN_PASSWORD: 'admin-pass-123',
