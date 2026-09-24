@@ -39,7 +39,7 @@
   },
   "private": true,
   "engines": {
-    "node": ">=22"
+    "node": "22.x"
   },
   "devDependencies": {
     "playwright": "^1.56.1"
