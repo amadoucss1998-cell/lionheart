@@ -558,3 +558,22 @@ table.table { width: 100%; border-collapse: collapse; background: var(--card); }
 
 /* Units next to prices read as normal text, not as labels. */
 .pcard .prices .price small.muted { font-family: var(--font); text-transform: none; letter-spacing: 0; font-size: .78rem; color: var(--muted); }
+
+/* Phones: the globe becomes a soft backdrop behind the headline so the
+   "Browse the catalog" button is visible without scrolling. */
+@media (max-width: 760px) {
+  .topbar { display: none; }
+  .hero { padding: 26px 0 40px; }
+  .hero .container { display: block; }
+  .hero-visual { position: absolute; inset: 0; min-height: 0; margin: 0; order: 0; pointer-events: none; z-index: 0; }
+  #hero-globe { inset: -70px -58% auto 30%; height: 400px; }
+  #hero-globe.is-ready { opacity: .5; }
+  .hero-copy { z-index: 2; }
+  .hero h1 { font-size: clamp(2.3rem, 10.5vw, 2.9rem); margin: 16px 0 14px; }
+  .hero p.lead { font-size: .98rem; line-height: 1.55; margin-bottom: 0; }
+  .hero p.lead .lead-more { display: none; }
+  .hero h1, .hero p.lead { text-shadow: 0 2px 18px rgba(10, 20, 30, .85); }
+  .hero .cta { margin-top: 20px; gap: 10px; }
+  .hero .btn-lg { padding: 13px 20px; }
+  .hero-stats { margin-top: 26px; padding-top: 16px; }
+}
