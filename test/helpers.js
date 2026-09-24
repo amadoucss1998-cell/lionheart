@@ -35,4 +35,18 @@ function browser(base) {
   return { req, csrf, post };
 }
 
-module.exports = { makeBrowser };
+// With TEST_DATABASE_URL set, the suite runs against that PostgreSQL server
+// (e.g. a local Postgres or a Supabase test project) instead of the embedded
+// database. Each test file starts from an empty schema; run files one at a time:
+//   TEST_DATABASE_URL=postgres://… npm run test:postgres
+function useTestDatabase() {
+  if (process.env.TEST_DATABASE_URL) process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
+}
+
+async function resetDatabase(db) {
+  if (db.kind !== 'postgres') return;
+  await db.run('DROP SCHEMA public CASCADE');
+  await db.run('CREATE SCHEMA public');
+}
+
+module.exports = { makeBrowser, useTestDatabase, resetDatabase };

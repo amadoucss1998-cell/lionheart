@@ -3,9 +3,11 @@ const crypto = require('crypto');
 const express = require('express');
 const cookieSession = require('cookie-session');
 const compression = require('compression');
-const { locals, csrfGlobal, UPLOAD_DIR } = require('./middleware');
+const { locals, csrfGlobal } = require('./middleware');
 const { rateLimit } = require('./rate-limit');
 const { db } = require('./db');
+const { bootstrap } = require('./seed');
+const storage = require('./storage');
 
 function createApp() {
   const app = express();
@@ -16,10 +18,16 @@ function createApp() {
 
   // Secure cookies and HSTS are switched on when the public address is HTTPS.
   // COOKIE_SECURE=true/false overrides the automatic choice.
-  const https = /^https:\/\//i.test(process.env.PUBLIC_URL || '');
+  // On Vercel the site is always served over HTTPS.
+  const https = Boolean(process.env.VERCEL) || /^https:\/\//i.test(process.env.PUBLIC_URL || '');
   const secureCookies = process.env.COOKIE_SECURE ? process.env.COOKIE_SECURE === 'true' : https;
 
   let secret = process.env.SESSION_SECRET;
+  if (!secret && process.env.VERCEL) {
+    // Every serverless instance would otherwise invent its own secret and
+    // visitors would be signed out / get "session expired" at random.
+    throw new Error('SESSION_SECRET is not set. Add it in Vercel → Project → Settings → Environment Variables.');
+  }
   if (!secret) {
     secret = crypto.randomBytes(32).toString('hex');
     if (process.env.NODE_ENV === 'production') {
@@ -32,7 +40,7 @@ function createApp() {
     "script-src 'self'",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: blob:",
+    `img-src 'self' data: blob:${storage.storageOrigin ? ` ${storage.storageOrigin}` : ''}`,
     "connect-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",
@@ -52,12 +60,14 @@ function createApp() {
   });
 
   // Health check for load balancers, Docker and uptime monitors.
-  app.get('/healthz', (req, res) => {
+  app.get('/healthz', async (req, res) => {
     try {
-      db.prepare('SELECT 1').get();
-      res.set('Cache-Control', 'no-store').json({ ok: true });
+      await bootstrap();
+      await db.get('SELECT 1 AS ok');
+      res.set('Cache-Control', 'no-store').json({ ok: true, database: db.kind, storage: storage.useSupabase ? 'supabase' : 'local' });
     } catch (err) {
-      res.status(503).json({ ok: false });
+      console.error('[healthz]', err.message);
+      res.status(503).set('Cache-Control', 'no-store').json({ ok: false });
     }
   });
   app.use(compression());
@@ -65,8 +75,16 @@ function createApp() {
   const vendor = (dir) => express.static(path.join(__dirname, '..', 'node_modules', dir), { maxAge: '7d' });
   app.use('/vendor/three', vendor('three/build'));
   app.use('/vendor/gsap', vendor('gsap/dist'));
-  app.use('/static', express.static(path.join(__dirname, '..', 'public'), { maxAge: '7d' }));
-  app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '30d', fallthrough: false }));
+  // public/ is served as-is (on Vercel its CDN serves these files directly).
+  app.use(express.static(path.join(__dirname, '..', 'public'), { maxAge: '7d', index: false }));
+  if (!storage.useSupabase) app.use('/uploads', express.static(storage.UPLOAD_DIR, { maxAge: '30d', fallthrough: false }));
+
+  // Make sure tables, the admin account and settings exist before handling
+  // requests (runs once per process / serverless instance).
+  app.use(async (req, res, next) => {
+    await bootstrap();
+    next();
+  });
   app.use(express.urlencoded({ extended: false, limit: '1mb', parameterLimit: 5000 }));
   app.use(
     cookieSession({

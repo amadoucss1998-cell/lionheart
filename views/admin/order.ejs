@@ -4,7 +4,7 @@
 <div class="admin-top">
   <div><div class="breadcrumbs"><a href="/admin/orders">Orders</a> / <%= order.ref %></div>
   <h1>Order <%= order.ref %> <span class="status status-<%= order.status %>" style="vertical-align:middle"><%= h.statusLabel(order.status) %></span></h1>
-  <span class="small muted">Placed <%= new Date(order.created_at + 'Z').toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) %><%= order.user_id ? ' · registered customer' : ' · guest checkout' %></span></div>
+  <span class="small muted">Placed <%= h.formatDate(order.created_at) %><%= order.user_id ? ' · registered customer' : ' · guest checkout' %></span></div>
   <div class="spacer"></div>
   <% if (waNumber) { %><a class="btn btn-whatsapp" target="_blank" rel="noopener" href="https://wa.me/<%= waNumber %>?text=<%= encodeURIComponent(`Hello ${order.customer_name}, this is Lionheart regarding your order ${order.ref}.`) %>"><%- icon('chat', 18) %> WhatsApp customer</a><% } %>
   <a class="btn btn-ghost" href="mailto:<%= order.email %>?subject=<%= encodeURIComponent('Your Lionheart order ' + order.ref) %>">Email</a>
@@ -92,7 +92,7 @@
       <h2>History</h2>
       <ul class="timeline">
         <% events.slice().reverse().forEach(e => { %>
-          <li><strong><%= h.statusLabel(e.status) %></strong><div class="when"><%= new Date(e.created_at + 'Z').toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) %><%= e.by_name ? ' · ' + e.by_name : '' %></div><% if (e.message) { %><div class="small prose"><%= e.message %></div><% } %></li>
+          <li><strong><%= h.statusLabel(e.status) %></strong><div class="when"><%= h.formatDate(e.created_at) %><%= e.by_name ? ' · ' + e.by_name : '' %></div><% if (e.message) { %><div class="small prose"><%= e.message %></div><% } %></li>
         <% }) %>
       </ul>
     </div></div>

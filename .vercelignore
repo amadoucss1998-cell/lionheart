@@ -1,0 +1,11 @@
+# Never upload local data, secrets or dev-only files to Vercel.
+data
+.env
+.env.*
+!.env.example
+test
+.github
+Dockerfile
+docker-compose.yml
+Caddyfile
+render.yaml

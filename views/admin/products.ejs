@@ -13,7 +13,7 @@
   <% if (!items.length) { %><tr><td colspan="7" class="center muted" style="padding:32px">No products yet. <a href="/admin/products/new">Add your first product</a>.</td></tr><% } %>
   <% items.forEach(p => { %>
     <tr>
-      <td class="thumbcell"><% if (p.image) { %><img src="/uploads/<%= p.image %>" alt=""><% } else { %><div class="placeholder"><%- icon(p.category_icon || 'box', 20) %></div><% } %></td>
+      <td class="thumbcell"><% if (p.image) { %><img src="<%= img(p.image) %>" alt=""><% } else { %><div class="placeholder"><%- icon(p.category_icon || 'box', 20) %></div><% } %></td>
       <td><a href="/admin/products/<%= p.id %>"><strong><%= p.name %></strong></a><div class="small muted"><%= p.sku || 'no SKU' %></div></td>
       <td class="small"><%= p.category_name || '—' %></td>
       <td class="small nowrap"><% if (p.sourcing_available) { %><%= p.china_price !== null ? fmt(p.china_price) : 'On request' %> <span class="muted">MOQ <%= p.moq %></span><% } else { %><span class="muted">—</span><% } %></td>

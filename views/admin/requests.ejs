@@ -6,7 +6,7 @@
   <% if (!requests.length) { %><tr><td colspan="5" class="center muted" style="padding:32px">No requests yet.</td></tr><% } %>
   <% requests.forEach(r => { %>
     <tr>
-      <td><a href="/admin/requests/<%= r.ref %>"><strong><%= r.ref %></strong></a><div class="small muted"><%= new Date(r.created_at + 'Z').toLocaleDateString('en-GB', { dateStyle: 'medium' }) %></div></td>
+      <td><a href="/admin/requests/<%= r.ref %>"><strong><%= r.ref %></strong></a><div class="small muted"><%= h.formatDate(r.created_at, 'date') %></div></td>
       <td><%= r.name %><div class="small muted"><%= r.phone || r.email %><%= r.country ? ' · ' + r.country : '' %></div></td>
       <td><%= r.description.slice(0, 110) %><%= r.description.length > 110 ? '…' : '' %><% if (r.category_name) { %><div class="small muted"><%= r.category_name %></div><% } %></td>
       <td class="small"><%= r.quantity || '—' %></td>

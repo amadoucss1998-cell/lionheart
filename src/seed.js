@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
-const { db } = require('./db');
+const { db, initDb } = require('./db');
 const { uniqueSlug } = require('./helpers');
 
 const CATEGORIES = [
@@ -70,70 +70,105 @@ const PRODUCTS = [
     'Inverter: 10kW hybrid, MPPT\nBattery: 10kWh LiFePO4\nCycles: 6000+'],
 ];
 
-function ensureAdmin() {
-  const hasAdmin = db.prepare("SELECT 1 FROM users WHERE role = 'admin'").get();
-  if (hasAdmin) return;
-  const email = (process.env.ADMIN_EMAIL || 'admin@lionheartgroup.info').toLowerCase();
-  const generated = !process.env.ADMIN_PASSWORD;
-  const password = process.env.ADMIN_PASSWORD || crypto.randomBytes(9).toString('base64url');
-  const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
-  if (existing) {
-    db.prepare("UPDATE users SET role = 'admin', password_hash = ? WHERE id = ?").run(bcrypt.hashSync(password, 10), existing.id);
-  } else {
-    db.prepare("INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, 'admin')").run('Administrator', email, bcrypt.hashSync(password, 10));
-  }
+// Both functions run inside a transaction holding an advisory lock, so two
+// instances starting at the same moment (e.g. serverless cold starts) cannot
+// create duplicate admins or seed the catalog twice.
+async function ensureAdmin() {
+  let created = null;
+  await db.transaction(async (tx) => {
+    await tx.run('SELECT pg_advisory_xact_lock(727275)');
+    if (await tx.get("SELECT 1 AS ok FROM users WHERE role = 'admin'")) return;
+    const email = (process.env.ADMIN_EMAIL || 'admin@lionheartgroup.info').toLowerCase();
+    const generated = !process.env.ADMIN_PASSWORD;
+    const password = process.env.ADMIN_PASSWORD || crypto.randomBytes(9).toString('base64url');
+    const hash = await bcrypt.hash(password, 10);
+    const existing = await tx.get('SELECT id FROM users WHERE lower(email) = ?', [email]);
+    if (existing) await tx.run("UPDATE users SET role = 'admin', password_hash = ? WHERE id = ?", [hash, existing.id]);
+    else await tx.run("INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, 'admin')", ['Administrator', email, hash]);
+    created = { email, password: generated ? password : null };
+  });
+  if (!created) return;
   console.log('\n==============================================');
   console.log(' Admin account created');
-  console.log(`   Email:    ${email}`);
-  console.log(`   Password: ${generated ? password : '(from ADMIN_PASSWORD)'}`);
-  if (generated) console.log('   Save this password now — change it after signing in.');
+  console.log(`   Email:    ${created.email}`);
+  console.log(`   Password: ${created.password || '(from ADMIN_PASSWORD)'}`);
+  if (created.password) console.log('   Save this password now — change it after signing in.');
   console.log('==============================================\n');
 }
 
-function seedCatalog() {
-  const hasCategories = db.prepare('SELECT 1 FROM categories').get();
-  if (!hasCategories) {
-    const stmt = db.prepare('INSERT INTO categories (name, slug, icon, description, sort_order) VALUES (?, ?, ?, ?, ?)');
-    CATEGORIES.forEach(([name, icon, desc], i) => stmt.run(name, uniqueSlug(db, 'categories', name), icon, desc, i));
-  }
-  const hasProducts = db.prepare('SELECT 1 FROM products').get();
-  if (hasProducts) return;
-  const catId = db.prepare('SELECT id FROM categories WHERE name = ?');
-  const insert = db.prepare(
-    `INSERT INTO products (sku, name, slug, category_id, short_description, description, specs, unit, moq,
-      sourcing_available, china_price, china_lead_days, stock_available, stock_price, stock_qty, stock_location, featured)
-     VALUES (@sku, @name, @slug, @category_id, @short, @description, @specs, @unit, @moq, 1, @china_price, @lead, @stock_available, @stock_price, @stock_qty, @stock_location, @featured)`
-  );
-  db.transaction(() => {
-    for (const [cat, name, sku, short, unit, moq, chinaPrice, lead, stockPrice, stockQty, location, featured, specs] of PRODUCTS) {
-      insert.run({
-        sku,
-        name,
-        slug: uniqueSlug(db, 'products', name),
-        category_id: (catId.get(cat) || {}).id || null,
-        short,
-        description:
-          `${short}. We source this product directly from verified manufacturers in China, inspect it at our warehouse ` +
-          'and ship it to your port or door. Custom specifications, colours and branding are available on request.',
-        specs,
-        unit,
-        moq,
-        china_price: chinaPrice,
-        lead,
-        stock_available: stockPrice !== null || location === 'Dubai' ? 1 : 0,
-        stock_price: stockPrice,
-        stock_qty: stockQty,
-        stock_location: location ? `${location} warehouse` : '',
-        featured,
-      });
+async function seedCatalog() {
+  await db.transaction(async (tx) => {
+    await tx.run('SELECT pg_advisory_xact_lock(727276)');
+    if (!(await tx.get('SELECT 1 AS ok FROM categories LIMIT 1'))) {
+      for (const [i, [name, icon, desc]] of CATEGORIES.entries()) {
+        await tx.run('INSERT INTO categories (name, slug, icon, description, sort_order) VALUES (?, ?, ?, ?, ?)', [
+          name,
+          await uniqueSlug(tx, 'categories', name),
+          icon,
+          desc,
+          i,
+        ]);
+      }
     }
-  })();
+    if (await tx.get('SELECT 1 AS ok FROM products LIMIT 1')) return;
+    const catIds = new Map((await tx.all('SELECT id, name FROM categories')).map((c) => [c.name, c.id]));
+    for (const [cat, name, sku, short, unit, moq, chinaPrice, lead, stockPrice, stockQty, location, featured, specs] of PRODUCTS) {
+      await tx.run(
+        `INSERT INTO products (sku, name, slug, category_id, short_description, description, specs, unit, moq,
+          sourcing_available, china_price, china_lead_days, stock_available, stock_price, stock_qty, stock_location, featured)
+         VALUES (@sku, @name, @slug, @category_id, @short, @description, @specs, @unit, @moq, 1, @china_price, @lead, @stock_available, @stock_price, @stock_qty, @stock_location, @featured)`,
+        {
+          sku,
+          name,
+          slug: await uniqueSlug(tx, 'products', name),
+          category_id: catIds.get(cat) || null,
+          short,
+          description:
+            `${short}. We source this product directly from verified manufacturers in China, inspect it at our warehouse ` +
+            'and ship it to your port or door. Custom specifications, colours and branding are available on request.',
+          specs,
+          unit,
+          moq,
+          china_price: chinaPrice,
+          lead,
+          stock_available: stockPrice !== null || location === 'Dubai' ? 1 : 0,
+          stock_price: stockPrice,
+          stock_qty: stockQty,
+          stock_location: location ? `${location} warehouse` : '',
+          featured,
+        }
+      );
+    }
+  });
 }
 
-module.exports = { ensureAdmin, seedCatalog };
+// Everything the app needs before serving requests. Memoised, so it runs once
+// per process (or per serverless instance).
+let bootPromise;
+function bootstrap() {
+  if (!bootPromise) {
+    bootPromise = (async () => {
+      await initDb();
+      await ensureAdmin();
+      if (process.env.SEED_DEMO !== 'false') await seedCatalog();
+    })().catch((err) => {
+      bootPromise = null;
+      throw err;
+    });
+  }
+  return bootPromise;
+}
+
+module.exports = { ensureAdmin, seedCatalog, bootstrap };
 
 if (require.main === module) {
-  ensureAdmin();
-  seedCatalog();
-  console.log('Seed complete.');
+  bootstrap()
+    .then(() => {
+      console.log('Seed complete.');
+      return db.close();
+    })
+    .catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
 }

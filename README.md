@@ -108,9 +108,43 @@ On first start, the system creates the admin account. If `ADMIN_PASSWORD` is not
 
 ## Deploying
 
-The site is one Node.js app with a SQLite database file. **Everything it stores lives in one folder, `/data`**: the database and uploaded photos. Keep that folder on a persistent disk and back it up.
+Where your data lives:
+- **Supabase (recommended, required on Vercel):** Supabase Postgres holds the database and Supabase Storage holds the photos. Supabase takes care of daily backups.
+- **Without Supabase:** the app uses a built-in database and saves photos to disk, all in one folder, `DATA_DIR` (`/data` in Docker). That's fine on a server with a persistent disk, as long as you back up the folder.
 
-### Option 1: Your own server (VPS) with Docker. Recommended.
+### Option 1: Vercel + Supabase (recommended)
+
+**A. Create the Supabase project** (free tier is enough to start)
+1. Sign in at <https://supabase.com> → **New project**. Choose a region close to your customers. Save the **database password**.
+2. **Project → Connect → Connection string → "Transaction pooler"** (port **6543**). Copy the string and put your database password in it. This is `DATABASE_URL`.
+3. **Project Settings → API keys:** copy the **Project URL** (`SUPABASE_URL`) and the **`service_role` secret key** (`SUPABASE_SERVICE_ROLE_KEY`). Keep the service key secret: never put it in front-end code or share it.
+
+That's all. The app creates its tables on first start and turns on **row-level security** on every table, so Supabase's public API can't read customer data. It also creates a public storage bucket, `lionheart-uploads`, for product photos when the first one is uploaded.
+
+**B. Deploy on Vercel**
+1. At <https://vercel.com/new>, **import** the GitHub repository `amadoucss1998-cell/lionheart`. Choose the branch and leave the framework as **Other**. `vercel.json` already sets the build.
+2. Under **Environment Variables**, add:
+
+   | Name | Value |
+   |---|---|
+   | `DATABASE_URL` | Supabase transaction-pooler string from step A2 |
+   | `SUPABASE_URL` | `https://YOUR-PROJECT-REF.supabase.co` |
+   | `SUPABASE_SERVICE_ROLE_KEY` | service_role key from step A3 |
+   | `SESSION_SECRET` | a long random string (`openssl rand -hex 32`) |
+   | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | the first admin sign-in |
+   | `PUBLIC_URL` | your final address, for example `https://shop.lionheartgroup.info` (optional until you add a domain) |
+   | `SEED_DEMO` | `true` for sample products, `false` for an empty catalog |
+   | alert settings | `SMTP_*`, `MAIL_FROM`, `WHATSAPP_*` (see **New order alerts**) |
+
+3. Click **Deploy**. Then open `https://<your-project>.vercel.app/healthz`. It should show `{"ok":true,"database":"postgres","storage":"supabase"}`.
+4. Sign in at `/admin`. To use your own domain, add it under **Project → Settings → Domains**, then set `PUBLIC_URL` to it and redeploy.
+
+Good to know on Vercel:
+- Photos are resized in the browser before upload (max 1800 px), because Vercel limits each request to 4.5 MB.
+- New-order alerts are sent after the page responds, using Vercel's `waitUntil`, so checkout stays fast.
+- If `DATABASE_URL` or `SESSION_SECRET` is missing, the function fails with a clear message in **Vercel → Logs** instead of losing data.
+
+### Option 2: Your own server (VPS) with Docker
 
 A small server is enough: 1 CPU and 1–2 GB RAM, for example DigitalOcean, Hetzner, AWS Lightsail or Contabo, running Ubuntu 22.04 or 24.04. HTTPS is automatic through Caddy.
 
@@ -138,7 +172,7 @@ docker compose exec app npm run backup     # back up the database now
 Also copy them off the server now and then, together with the uploaded photos:
 `docker compose cp app:/data ./lionheart-data-copy`.
 
-### Option 2: Render (managed, no server to maintain)
+### Option 3: Render
 
 1. Push this repository to GitHub. It's already there.
 2. On <https://render.com>, choose **New → Blueprint** and select the repository. `render.yaml` creates the web service with a 5 GB persistent disk and a generated `SESSION_SECRET`.
@@ -146,7 +180,7 @@ Also copy them off the server now and then, together with the uploaded photos:
 
 A persistent disk needs a paid plan (Starter). Railway and Fly.io also work with the included `Dockerfile`, as long as you attach a volume at `/data`.
 
-### Option 3: Without Docker
+### Option 4: Without Docker
 
 On a server with Node.js 22+: `npm ci --omit=dev`, create `.env` from `.env.example`, run `NODE_ENV=production npm start`, and put Nginx or Caddy in front for HTTPS. The app reads `.env` automatically. Use a process manager (systemd or pm2) so it restarts after reboots.
 
@@ -157,7 +191,9 @@ On a server with Node.js 22+: `npm ci --omit=dev`, create `.env` from `.env.exam
 | `PORT` | `3000` | HTTP port |
 | `SESSION_SECRET` | random per start | Signs login cookies. **Required in production.** |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | `admin@lionheartgroup.info` / generated | First admin account |
-| `DATA_DIR` | `./data` | SQLite database and uploaded photos. **Back this folder up.** |
+| `DATABASE_URL` | unset | Supabase / PostgreSQL connection string. If unset, the built-in database in `DATA_DIR` is used. |
+| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_BUCKET` | unset / `lionheart-uploads` | Store photos in Supabase Storage. If unset, photos are saved in `DATA_DIR/uploads`. |
+| `DATA_DIR` | `./data` | Built-in database and photos when Supabase isn't used. **Back this folder up.** |
 | `SEED_DEMO` | `true` | Load sample categories and products on first start |
 | `PUBLIC_URL` | from request | Your site's address, used for links in alerts |
 | `SMTP_*`, `MAIL_FROM`, `WHATSAPP_*`, `TWILIO_*`, `CALLMEBOT_RECIPIENTS` | unset | Alert channels (see above) |
@@ -179,7 +215,8 @@ On a server with Node.js 22+: `npm ci --omit=dev`, create `.env` from `.env.exam
 ## Testing
 
 ```bash
-npm test          # 18 server tests: ordering, quotations, security, alerts, uploads, CSV import
+npm test          # 20 server tests: ordering, quotations, security, alerts, uploads, Supabase Storage, CSV import
+TEST_DATABASE_URL=postgres://… npm run test:postgres   # the same tests against a real PostgreSQL / Supabase test database
 npm run test:e2e  # real-browser test (Chromium) of a running site
 ```
 
@@ -191,8 +228,8 @@ BASE_URL=https://shop.lionheartgroup.info ADMIN_EMAIL=… ADMIN_PASSWORD=… npm
 
 It places one order named "E2E Test" and cancels it at the end, and deletes the test product it creates.
 
-GitHub Actions (`.github/workflows/ci.yml`) runs on every push. It runs the server tests, builds the Docker image, starts it, checks `/healthz`, and runs the browser test against the container.
+GitHub Actions (`.github/workflows/ci.yml`) runs on every push. It runs the server tests on the built-in database and on PostgreSQL 16, builds the Docker image, starts it, checks `/healthz`, and runs the browser test against the container.
 
 ## Tech
 
-Node.js, Express 5, EJS server-rendered pages, SQLite (better-sqlite3), Three.js and GSAP. Every form is protected with CSRF tokens. Passwords are hashed with bcrypt. Uploads are limited to images of 8 MB or less. Rate limiting protects sign-in and public forms. A strict Content-Security-Policy and HSTS are sent, and `/healthz` supports uptime monitoring.
+Node.js, Express 5, EJS server-rendered pages, PostgreSQL (Supabase in production, embedded PGlite for local development), Supabase Storage, Three.js and GSAP. Every form is protected with CSRF tokens. Passwords are hashed with bcrypt. Uploads are limited to images of 8 MB or less. Rate limiting protects sign-in and public forms. A strict Content-Security-Policy and HSTS are sent, and `/healthz` supports uptime monitoring.

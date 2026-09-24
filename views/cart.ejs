@@ -15,7 +15,7 @@
         <input type="hidden" name="_csrf" value="<%= csrf %>">
         <% lines.forEach(l => { %>
           <div class="cart-item">
-            <a class="ci-img" href="/products/<%= l.product.slug %>"><% if (l.product.images.length) { %><img src="/uploads/<%= l.product.images[0].filename %>" alt=""><% } else { %><div class="placeholder"><%- icon(l.product.category_icon || 'box', 28) %></div><% } %></a>
+            <a class="ci-img" href="/products/<%= l.product.slug %>"><% if (l.product.images.length) { %><img src="<%= img(l.product.images[0].filename) %>" alt=""><% } else { %><div class="placeholder"><%- icon(l.product.category_icon || 'box', 28) %></div><% } %></a>
             <div>
               <a href="/products/<%= l.product.slug %>"><strong><%= l.product.name %></strong></a>
               <div class="mt-1"><span class="tag tag-<%= l.mode %>"><%= h.MODES[l.mode].short %></span>

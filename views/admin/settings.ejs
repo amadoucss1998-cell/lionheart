@@ -51,7 +51,7 @@
   <div class="table-wrap"><table class="table">
     <thead><tr><th>When</th><th>Channel</th><th>To</th><th>Message</th><th>Result</th></tr></thead>
     <tbody><% alertLog.forEach(l => { %>
-      <tr><td class="small nowrap"><%= new Date(l.created_at + 'Z').toLocaleString('en-GB', { dateStyle: 'short', timeStyle: 'short' }) %></td>
+      <tr><td class="small nowrap"><%= h.formatDate(l.created_at, 'short') %></td>
       <td class="small"><%= l.channel %></td><td class="small"><%= l.recipient %></td><td class="small"><%= l.subject %></td>
       <td><% if (l.status === 'sent') { %><span class="tag tag-stock">Sent</span><% } else { %><span class="tag" style="background:var(--red-soft);color:var(--red)">Failed</span><div class="small muted"><%= l.error %></div><% } %></td></tr>
     <% }) %></tbody>

@@ -18,7 +18,7 @@
     <div class="table-wrap mt-1"><table class="table">
       <thead><tr><th>Order</th><th>Customer</th><th>Status</th><th class="right">Value</th></tr></thead>
       <tbody><% recentOrders.forEach(o => { %>
-        <tr><td><a href="/admin/orders/<%= o.ref %>"><strong><%= o.ref %></strong></a><div class="small muted"><%= new Date(o.created_at + 'Z').toLocaleString('en-GB', { dateStyle: 'short', timeStyle: 'short' }) %></div></td>
+        <tr><td><a href="/admin/orders/<%= o.ref %>"><strong><%= o.ref %></strong></a><div class="small muted"><%= h.formatDate(o.created_at, 'short') %></div></td>
         <td><%= o.customer_name %><div class="small muted"><%= o.country %></div></td>
         <td><span class="status status-<%= o.status %>"><%= h.statusLabel(o.status) %></span></td>
         <td class="right nowrap"><%= o.quoted_total !== null ? fmt(o.quoted_total) : o.estimate_total ? '~' + fmt(o.estimate_total) : '—' %></td></tr>

@@ -5,12 +5,12 @@
   <div class="product-layout">
     <div class="gallery" data-gallery>
       <div class="main">
-        <% if (product.images.length) { %><img src="/uploads/<%= product.images[0].filename %>" alt="<%= product.name %>"><% } else { %><div class="placeholder"><%- icon(product.category_icon || 'box', 96) %></div><% } %>
+        <% if (product.images.length) { %><img src="<%= img(product.images[0].filename) %>" alt="<%= product.name %>"><% } else { %><div class="placeholder"><%- icon(product.category_icon || 'box', 96) %></div><% } %>
       </div>
       <% if (product.images.length > 1) { %>
         <div class="thumbs">
-          <% product.images.forEach((img, i) => { %>
-            <button type="button" class="<%= i === 0 ? 'active' : '' %>" data-src="/uploads/<%= img.filename %>" aria-label="Show photo <%= i + 1 %>"><img src="/uploads/<%= img.filename %>" alt=""></button>
+          <% product.images.forEach((im, i) => { %>
+            <button type="button" class="<%= i === 0 ? 'active' : '' %>" data-src="<%= img(im.filename) %>" aria-label="Show photo <%= i + 1 %>"><img src="<%= img(im.filename) %>" alt=""></button>
           <% }) %>
         </div>
       <% } %>

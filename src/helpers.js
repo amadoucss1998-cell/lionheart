@@ -49,16 +49,23 @@ function slugify(str) {
     .slice(0, 80) || 'item';
 }
 
-function uniqueSlug(db, table, base, ignoreId) {
-  let slug = slugify(base);
-  let n = 1;
-  const stmt = db.prepare(`SELECT id FROM ${table} WHERE slug = ?`);
-  for (;;) {
-    const row = stmt.get(slug);
+async function uniqueSlug(db, table, base, ignoreId) {
+  if (!['products', 'categories'].includes(table)) throw new Error('bad table');
+  const root = slugify(base);
+  let slug = root;
+  for (let n = 2; ; n++) {
+    const row = await db.get(`SELECT id FROM ${table} WHERE slug = ?`, [slug]);
     if (!row || row.id === ignoreId) return slug;
-    n += 1;
-    slug = `${slugify(base)}-${n}`;
+    slug = `${root}-${n}`;
   }
+}
+
+// Formats a database timestamp (Date or ISO string) for display.
+function formatDate(v, style = 'datetime') {
+  if (!v) return '';
+  const d = v instanceof Date ? v : new Date(v);
+  const opts = style === 'date' ? { dateStyle: 'medium' } : style === 'short' ? { dateStyle: 'short', timeStyle: 'short' } : { dateStyle: 'medium', timeStyle: 'short' };
+  return d.toLocaleString('en-GB', { ...opts, timeZone: 'UTC' }) + (style === 'date' ? '' : ' UTC');
 }
 
 function makeRef(prefix) {
@@ -143,6 +150,7 @@ module.exports = {
   MODES,
   slugify,
   uniqueSlug,
+  formatDate,
   makeRef,
   money,
   parseSpecs,

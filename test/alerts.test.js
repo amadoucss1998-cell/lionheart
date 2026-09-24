@@ -18,11 +18,12 @@ Object.assign(process.env, {
 });
 
 const nodemailer = require('nodemailer');
-const { ensureAdmin, seedCatalog } = require('../src/seed');
+require('./helpers').useTestDatabase();
+const { bootstrap } = require('../src/seed');
 const { createApp } = require('../src/app');
 const { db, setSetting } = require('../src/db');
 const notify = require('../src/notify');
-const { makeBrowser } = require('./helpers');
+const { makeBrowser, resetDatabase } = require('./helpers');
 
 let server;
 let browser;
@@ -42,12 +43,12 @@ transport.sendMail = async (msg) => {
 before(async () => {
   const log = console.log;
   console.log = () => {};
-  ensureAdmin();
-  seedCatalog();
+  await resetDatabase(db);
+  await bootstrap();
   console.log = log;
   notify._setTransport(transport);
-  setSetting('alert_emails', 'sales@lionheart.test, boss@lionheart.test');
-  setSetting('alert_whatsapp_numbers', '+231 888 979 704, 971500000001');
+  await setSetting('alert_emails', 'sales@lionheart.test, boss@lionheart.test');
+  await setSetting('alert_whatsapp_numbers', '+231 888 979 704, 971500000001');
 
   // Intercept calls to the WhatsApp API; let calls to the test server through.
   global.fetch = async (url, init) => {
@@ -65,24 +66,24 @@ before(async () => {
   browser = makeBrowser(`http://127.0.0.1:${server.address().port}`);
 });
 
-after(() => {
+after(async () => {
   global.fetch = realFetch;
   server.close();
-  db.close();
+  await db.close();
   fs.rmSync(tmp, { recursive: true, force: true });
 });
 
-beforeEach(() => {
+beforeEach(async () => {
   emails = [];
   whatsapp = [];
   whatsappFails = false;
-  db.prepare('DELETE FROM notification_log').run();
+  (await db.run('DELETE FROM notification_log'));
 });
 
 async function waitFor(check, ms = 3000) {
   const end = Date.now() + ms;
   while (Date.now() < end) {
-    if (check()) return;
+    if (await check()) return;
     await new Promise((r) => setTimeout(r, 20));
   }
   assert.fail('timed out waiting for alerts');
@@ -90,7 +91,7 @@ async function waitFor(check, ms = 3000) {
 
 async function placeOrder() {
   const b = browser();
-  const p = db.prepare("SELECT * FROM products WHERE sku = 'RF-DECRA-BD'").get();
+  const p = (await db.get("SELECT * FROM products WHERE sku = 'RF-DECRA-BD'"));
   await b.post('/cart/add', { product_id: p.id, mode: 'source', qty: 800, notes: 'Red, Milano profile' }, `/products/${p.slug}`);
   const res = await b.post(
     '/checkout',
@@ -103,7 +104,7 @@ async function placeOrder() {
 
 test('new order sends email and WhatsApp alerts to every recipient', async () => {
   const ref = await placeOrder();
-  await waitFor(() => db.prepare('SELECT COUNT(*) AS n FROM notification_log').get().n === 3);
+  await waitFor(async () => (await db.get('SELECT COUNT(*) AS n FROM notification_log')).n === 3);
 
   const mail = emails[0];
   assert.strictEqual(mail.to, 'sales@lionheart.test, boss@lionheart.test');
@@ -121,7 +122,7 @@ test('new order sends email and WhatsApp alerts to every recipient', async () =>
   assert.match(wa.body.text.body, new RegExp(`NEW ORDER ${ref}`));
   assert.match(wa.body.text.body, /\+231 770 000 111/);
 
-  const log = db.prepare('SELECT * FROM notification_log').all();
+  const log = (await db.all('SELECT * FROM notification_log'));
   assert.strictEqual(log.length, 3);
   assert.ok(log.every((l) => l.status === 'sent'));
 });
@@ -145,9 +146,9 @@ test('WhatsApp templates get single-line parameters', async () => {
 test('a failing alert channel is logged and does not affect the order', async () => {
   whatsappFails = true;
   const ref = await placeOrder();
-  assert.ok(db.prepare('SELECT 1 FROM orders WHERE ref = ?').get(ref));
-  await waitFor(() => db.prepare("SELECT COUNT(*) AS n FROM notification_log WHERE status = 'failed'").get().n === 2);
-  const failed = db.prepare("SELECT * FROM notification_log WHERE status = 'failed'").get();
+  assert.ok((await db.get('SELECT 1 FROM orders WHERE ref = ?', [ref])));
+  await waitFor(async () => (await db.get("SELECT COUNT(*) AS n FROM notification_log WHERE status = 'failed'")).n === 2);
+  const failed = (await db.get("SELECT * FROM notification_log WHERE status = 'failed'"));
   assert.match(failed.error, /HTTP 401/);
   assert.strictEqual(emails.length, 1);
 
@@ -170,7 +171,7 @@ test('sourcing requests alert unless switched off', async () => {
   assert.match(emails[0].subject, /New sourcing request RQ-/);
   assert.match(emails[0].html, /Kitchen cabinets for 12 apartments/);
 
-  setSetting('alert_on_requests', 'no');
+  await setSetting('alert_on_requests', 'no');
   emails = [];
   const fd2 = new FormData();
   fd2.append('_csrf', await b.csrf('/request'));
@@ -180,7 +181,7 @@ test('sourcing requests alert unless switched off', async () => {
   await b.req('/request', { method: 'POST', body: fd2 });
   await new Promise((r) => setTimeout(r, 200));
   assert.strictEqual(emails.length, 0);
-  setSetting('alert_on_requests', 'yes');
+  await setSetting('alert_on_requests', 'yes');
 });
 
 test('admin can send a test alert', async () => {

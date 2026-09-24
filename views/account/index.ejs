@@ -17,7 +17,7 @@
       <% orders.forEach(o => { %>
         <tr>
           <td><a href="/orders/<%= o.ref %>"><strong><%= o.ref %></strong></a></td>
-          <td class="nowrap"><%= new Date(o.created_at + 'Z').toLocaleDateString('en-GB', { dateStyle: 'medium' }) %></td>
+          <td class="nowrap"><%= h.formatDate(o.created_at, 'date') %></td>
           <td><%= o.item_count %></td>
           <td><span class="status status-<%= o.status %>"><%= h.statusLabel(o.status) %></span></td>
           <td class="right nowrap"><%= o.quoted_total !== null ? fmt(o.quoted_total) : o.estimate_total ? `~${fmt(o.estimate_total)}` : 'Pending' %></td>

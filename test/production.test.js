@@ -14,9 +14,11 @@ Object.assign(process.env, {
   PUBLIC_URL: 'https://shop.lionheart.test',
 });
 
-const { ensureAdmin, seedCatalog } = require('../src/seed');
+require('./helpers').useTestDatabase();
+const { bootstrap } = require('../src/seed');
 const { createApp } = require('../src/app');
 const { db } = require('../src/db');
+const { resetDatabase } = require('./helpers');
 
 let server;
 let base;
@@ -24,17 +26,17 @@ let base;
 before(async () => {
   const log = console.log;
   console.log = () => {};
-  ensureAdmin();
-  seedCatalog();
+  await resetDatabase(db);
+  await bootstrap();
   console.log = log;
   server = createApp().listen(0);
   await new Promise((r) => server.once('listening', r));
   base = `http://127.0.0.1:${server.address().port}`;
 });
 
-after(() => {
+after(async () => {
   server.close();
-  db.close();
+  await db.close();
   fs.rmSync(tmp, { recursive: true, force: true });
 });
 
@@ -45,7 +47,7 @@ const viaProxy = (url, init = {}) =>
 test('health check reports ok without setting cookies', async () => {
   const res = await fetch(`${base}/healthz`);
   assert.strictEqual(res.status, 200);
-  assert.deepStrictEqual(await res.json(), { ok: true });
+  assert.deepStrictEqual(await res.json(), { ok: true, database: db.kind, storage: 'local' });
   assert.strictEqual(res.headers.getSetCookie().length, 0);
 });
 

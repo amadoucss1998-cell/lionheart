@@ -6,7 +6,7 @@ try {
 }
 
 const { createApp } = require('./app');
-const { ensureAdmin, seedCatalog } = require('./seed');
+const { bootstrap } = require('./seed');
 const { db } = require('./db');
 
 const production = process.env.NODE_ENV === 'production';
@@ -18,21 +18,25 @@ if (production && !process.env.PUBLIC_URL) {
   console.warn('PUBLIC_URL is not set; links in alert emails and WhatsApp messages will use the request host.');
 }
 
-ensureAdmin();
-if (process.env.SEED_DEMO !== 'false') seedCatalog();
-
 const port = Number(process.env.PORT) || 3000;
-const server = createApp().listen(port, () => {
-  console.log(`Lionheart trade portal running on http://localhost:${port} (${production ? 'production' : 'development'})`);
-});
+let server;
+bootstrap()
+  .then(() => {
+    server = createApp().listen(port, () => {
+      console.log(`Lionheart trade portal running on http://localhost:${port} (${production ? 'production' : 'development'}, database: ${db.kind})`);
+    });
+  })
+  .catch((err) => {
+    console.error('Could not start:', err.message);
+    process.exit(1);
+  });
 
 // Finish in-flight requests and close the database cleanly on redeploys.
 function shutdown(signal) {
   console.log(`${signal} received, shutting down…`);
-  server.close(() => {
-    db.close();
-    process.exit(0);
-  });
+  const done = () => Promise.resolve(db.close()).finally(() => process.exit(0));
+  if (server) server.close(done);
+  else done();
   setTimeout(() => process.exit(1), 10000).unref();
 }
 process.on('SIGTERM', () => shutdown('SIGTERM'));

@@ -39,8 +39,8 @@ function whatsappProvider() {
 const splitList = (v) => String(v || '').split(/[,;\n]/).map((x) => x.trim()).filter(Boolean);
 const digits = (v) => String(v || '').replace(/\D/g, '');
 
-function status() {
-  const settings = getSettings();
+async function status() {
+  const settings = await getSettings();
   const provider = whatsappProvider();
   return {
     emailConfigured: Boolean(mailer()),
@@ -63,20 +63,20 @@ function callmebotRecipients() {
 
 // ---------- logging ----------
 
-function log(channel, recipient, subject, ok, error) {
-  db.prepare('INSERT INTO notification_log (channel, recipient, subject, status, error) VALUES (?, ?, ?, ?, ?)').run(
+async function log(channel, recipient, subject, ok, error) {
+  await db.run('INSERT INTO notification_log (channel, recipient, subject, status, error) VALUES (?, ?, ?, ?, ?)', [
     channel,
     recipient,
     subject,
     ok ? 'sent' : 'failed',
-    error ? String(error).slice(0, 500) : null
-  );
-  db.prepare('DELETE FROM notification_log WHERE id NOT IN (SELECT id FROM notification_log ORDER BY id DESC LIMIT 500)').run();
+    error ? String(error).slice(0, 500) : null,
+  ]);
+  await db.run('DELETE FROM notification_log WHERE id < (SELECT id FROM notification_log ORDER BY id DESC OFFSET 500 LIMIT 1)');
   if (!ok) console.error(`[alerts] ${channel} to ${recipient} failed: ${error}`);
 }
 
 function recentLog(limit = 25) {
-  return db.prepare('SELECT * FROM notification_log ORDER BY id DESC LIMIT ?').all(limit);
+  return db.all('SELECT * FROM notification_log ORDER BY id DESC LIMIT ?', [limit]);
 }
 
 // ---------- senders ----------
@@ -84,14 +84,14 @@ function recentLog(limit = 25) {
 async function sendEmail({ subject, text, html }) {
   const t = mailer();
   if (!t) return;
-  const to = splitList(getSettings().alert_emails);
+  const to = splitList((await getSettings()).alert_emails);
   if (!to.length) return;
   const from = env.MAIL_FROM || env.SMTP_USER || to[0];
   try {
     await t.sendMail({ from, to: to.join(', '), subject, text, html });
-    log('email', to.join(', '), subject, true);
+    await log('email', to.join(', '), subject, true);
   } catch (err) {
-    log('email', to.join(', '), subject, false, err.message);
+    await log('email', to.join(', '), subject, false, err.message);
   }
 }
 
@@ -150,14 +150,14 @@ async function sendWhatsApp(msg) {
   const recipients =
     provider === 'callmebot'
       ? callmebotRecipients()
-      : splitList(getSettings().alert_whatsapp_numbers).map((n) => ({ phone: digits(n) })).filter((r) => r.phone);
+      : splitList((await getSettings()).alert_whatsapp_numbers).map((n) => ({ phone: digits(n) })).filter((r) => r.phone);
   await Promise.all(
     recipients.map(async (r) => {
       try {
         await sendersByProvider[provider](r.phone, msg, r.apikey);
-        log(`whatsapp:${provider}`, `+${r.phone}`, msg.subject, true);
+        await log(`whatsapp:${provider}`, `+${r.phone}`, msg.subject, true);
       } catch (err) {
-        log(`whatsapp:${provider}`, `+${r.phone}`, msg.subject, false, err.message);
+        await log(`whatsapp:${provider}`, `+${r.phone}`, msg.subject, false, err.message);
       }
     })
   );
@@ -168,7 +168,8 @@ async function sendWhatsApp(msg) {
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
 function baseUrl(fallback) {
-  return (env.PUBLIC_URL || fallback || '').replace(/\/+$/, '');
+  const vercel = env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${env.VERCEL_PROJECT_PRODUCTION_URL}` : '';
+  return (env.PUBLIC_URL || vercel || fallback || '').replace(/\/+$/, '');
 }
 
 function emailShell(title, intro, rowsHtml, link, linkLabel) {
@@ -192,8 +193,7 @@ const kvTable = (rows) =>
     .map(([k, v]) => `<tr><td style="padding:6px 0;color:#5d6b7a;width:130px;vertical-align:top">${esc(k)}</td><td style="padding:6px 0">${esc(v)}</td></tr>`)
     .join('')}</table>`;
 
-function orderMessages(order, items, fallbackUrl) {
-  const currency = getSettings().currency || 'USD';
+function orderMessages(order, items, fallbackUrl, currency = 'USD') {
   const fmt = (v) => money(v, currency);
   const link = baseUrl(fallbackUrl) ? `${baseUrl(fallbackUrl)}/admin/orders/${order.ref}` : '';
   const destination = [order.city, order.country].filter(Boolean).join(', ');
@@ -300,17 +300,20 @@ function dispatch(msg) {
 }
 
 function notifyNewOrder(orderId, fallbackUrl) {
-  return safely(() => {
-    const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId);
-    const items = db.prepare('SELECT * FROM order_items WHERE order_id = ? ORDER BY id').all(orderId);
-    return dispatch(orderMessages(order, items, fallbackUrl));
+  return safely(async () => {
+    const [order, items, settings] = await Promise.all([
+      db.get('SELECT * FROM orders WHERE id = ?', [orderId]),
+      db.all('SELECT * FROM order_items WHERE order_id = ? ORDER BY id', [orderId]),
+      getSettings(),
+    ]);
+    return dispatch(orderMessages(order, items, fallbackUrl, settings.currency || 'USD'));
   });
 }
 
 function notifyNewRequest(requestId, fallbackUrl) {
-  return safely(() => {
-    if (getSettings().alert_on_requests === 'no') return undefined;
-    const request = db.prepare('SELECT * FROM sourcing_requests WHERE id = ?').get(requestId);
+  return safely(async () => {
+    if ((await getSettings()).alert_on_requests === 'no') return undefined;
+    const request = await db.get('SELECT * FROM sourcing_requests WHERE id = ?', [requestId]);
     return dispatch(requestMessages(request, fallbackUrl));
   });
 }

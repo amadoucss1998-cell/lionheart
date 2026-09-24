@@ -135,7 +135,7 @@ test('staff add a product with a photo and it appears in the shop', { skip: !ADM
   // A 1.5 MB photo, generated in the browser, to exercise real upload sizes.
   const png = await admin.evaluate(async () => {
     const c = document.createElement('canvas');
-    c.width = 1400; c.height = 1000;
+    c.width = 2600; c.height = 1800;
     const ctx = c.getContext('2d');
     const img = ctx.createImageData(c.width, c.height);
     for (let i = 0; i < img.data.length; i++) img.data[i] = i % 4 === 3 ? 255 : (Math.random() * 256) | 0;
@@ -155,10 +155,13 @@ test('staff add a product with a photo and it appears in the shop', { skip: !ADM
   const shop = await newPage();
   await shop.goto(`${BASE}/products?q=${encodeURIComponent(name)}`);
   const src = await shop.getAttribute('.pcard img', 'src');
-  assert.match(src, /^\/uploads\//);
-  const photo = await shop.request.get(BASE + src);
+  assert.match(src, /^(\/uploads\/|https?:\/\/)/); // local disk or Supabase Storage
+  const photo = await shop.request.get(src.startsWith('/') ? BASE + src : src);
   assert.strictEqual(photo.status(), 200);
-  assert.ok((await photo.body()).length > 1000000);
+  assert.match(photo.headers()['content-type'], /^image\//);
+  // Large photos are shrunk in the browser before upload (max 1800px JPEG).
+  assert.ok((await photo.body()).length > 50000);
+  assert.ok(await shop.$eval('.pcard img', (img) => img.complete && img.naturalWidth > 0), 'photo displays');
 
   await admin.goto(editUrl);
   admin.once('dialog', (d) => d.accept());

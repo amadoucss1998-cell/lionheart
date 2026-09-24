@@ -6,7 +6,7 @@
   <div class="page-head">
     <div><div class="breadcrumbs"><a href="<%= user ? '/account' : '/track' %>"><%= user ? 'My account' : 'Track order' %></a> / Order</div>
     <h1>Order <%= order.ref %></h1>
-    <span class="muted small">Placed <%= new Date(order.created_at + 'Z').toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) %></span></div>
+    <span class="muted small">Placed <%= h.formatDate(order.created_at) %></span></div>
     <div class="spacer"></div>
     <span class="status status-<%= order.status %>"><%= h.statusLabel(order.status) %></span>
   </div>
@@ -84,7 +84,7 @@
         <h2>History</h2>
         <ul class="timeline">
           <% events.slice().reverse().forEach(e => { %>
-            <li><strong><%= h.statusLabel(e.status) %></strong><div class="when"><%= new Date(e.created_at + 'Z').toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) %></div><% if (e.message) { %><div class="small prose"><%= e.message %></div><% } %></li>
+            <li><strong><%= h.statusLabel(e.status) %></strong><div class="when"><%= h.formatDate(e.created_at) %></div><% if (e.message) { %><div class="small prose"><%= e.message %></div><% } %></li>
           <% }) %>
         </ul>
       </div></div>

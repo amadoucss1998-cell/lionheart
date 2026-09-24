@@ -16,7 +16,7 @@
       <dt>Quantity</dt><dd><%= request.quantity || '—' %></dd>
       <dt>Target price</dt><dd><%= request.target_price || '—' %></dd>
     </dl>
-    <% if (request.image_filename) { %><a href="/uploads/<%= request.image_filename %>" target="_blank"><img src="/uploads/<%= request.image_filename %>" alt="Reference" style="max-height:340px;border-radius:10px;margin-top:14px;border:1px solid var(--line)"></a><% } %>
+    <% if (request.image_filename) { %><a href="<%= img(request.image_filename) %>" target="_blank"><img src="<%= img(request.image_filename) %>" alt="Reference" style="max-height:340px;border-radius:10px;margin-top:14px;border:1px solid var(--line)"></a><% } %>
   </div></div>
   <div class="stack">
     <div class="card"><div class="card-body">
@@ -26,7 +26,7 @@
         <dt>Email</dt><dd><a href="mailto:<%= request.email %>"><%= request.email %></a></dd>
         <dt>Phone</dt><dd><%= request.phone || '—' %></dd>
         <dt>Country</dt><dd><%= request.country || '—' %></dd>
-        <dt>Received</dt><dd><%= new Date(request.created_at + 'Z').toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) %></dd>
+        <dt>Received</dt><dd><%= h.formatDate(request.created_at) %></dd>
       </dl>
     </div></div>
     <form class="card" method="post" action="/admin/requests/<%= request.ref %>">

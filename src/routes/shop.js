@@ -5,6 +5,8 @@ const { upload, withUpload, flash } = require('../middleware');
 const { SHIPPING_METHODS, makeRef, toIntOrNull, parseSpecs } = require('../helpers');
 const { orderForViewer, loadOrderDetail } = require('../orders');
 const notify = require('../notify');
+const { saveImage } = require('../storage');
+const { runInBackground } = require('../background');
 
 const router = express.Router();
 const PAGE_SIZE = 24;
@@ -15,20 +17,21 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Used for links in staff alerts when PUBLIC_URL is not set.
 const siteUrl = (req) => `${req.protocol}://${req.get('host')}`;
 
-router.get('/', (req, res) => {
-  const featured = listProducts({ featured: true, limit: 8 }).items;
-  const latest = listProducts({ sort: 'newest', limit: 8 }).items;
-  const counts = Object.fromEntries(
-    db.prepare('SELECT category_id, COUNT(*) AS n FROM products WHERE active = 1 GROUP BY category_id').all().map((r) => [r.category_id, r.n])
-  );
+router.get('/', async (req, res) => {
+  const [featured, latest, countRows] = await Promise.all([
+    listProducts({ featured: true, limit: 8 }),
+    listProducts({ sort: 'newest', limit: 8 }),
+    db.all('SELECT category_id, COUNT(*)::int AS n FROM products WHERE active = 1 GROUP BY category_id'),
+  ]).then(([f, l, c]) => [f.items, l.items, c]);
+  const counts = Object.fromEntries(countRows.map((r) => [r.category_id, r.n]));
   const totals = {
-    products: db.prepare('SELECT COUNT(*) AS n FROM products WHERE active = 1').get().n,
-    categories: db.prepare('SELECT COUNT(*) AS n FROM categories').get().n,
+    products: countRows.reduce((sum, r) => sum + r.n, 0),
+    categories: res.locals.categoriesNav.length,
   };
   res.render('home', { title: null, featured, latest, counts, totals, hero3d: true });
 });
 
-router.get('/products', (req, res) => {
+router.get('/products', async (req, res) => {
   const page = Math.max(1, toIntOrNull(req.query.page) || 1);
   const filters = {
     q: trim(req.query.q, 100),
@@ -36,8 +39,10 @@ router.get('/products', (req, res) => {
     mode: ['stock', 'source'].includes(req.query.mode) ? req.query.mode : '',
     sort: trim(req.query.sort, 20),
   };
-  const { items, total } = listProducts({ ...filters, limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE });
-  const category = filters.category ? db.prepare('SELECT * FROM categories WHERE slug = ?').get(filters.category) : null;
+  const [{ items, total }, category] = await Promise.all([
+    listProducts({ ...filters, limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE }),
+    filters.category ? db.get('SELECT * FROM categories WHERE slug = ?', [filters.category]) : null,
+  ]);
   res.render('products', {
     title: category ? category.name : filters.q ? `Search: ${filters.q}` : 'All products',
     items,
@@ -51,19 +56,19 @@ router.get('/products', (req, res) => {
 
 router.get('/category/:slug', (req, res) => res.redirect(301, `/products?category=${encodeURIComponent(req.params.slug)}`));
 
-router.get('/products/:slug', (req, res) => {
-  const product = getProduct({ slug: req.params.slug });
+router.get('/products/:slug', async (req, res) => {
+  const product = await getProduct({ slug: req.params.slug });
   if (!product || (!product.active && !(req.user && req.user.role !== 'customer'))) {
     return res.status(404).render('error', { title: 'Product not found', message: 'This product is no longer available. Try searching the catalog or send us a sourcing request.' });
   }
-  const related = listProducts({ category: product.category_slug, limit: 5 }).items.filter((p) => p.id !== product.id).slice(0, 4);
+  const related = (await listProducts({ category: product.category_slug, limit: 5 })).items.filter((p) => p.id !== product.id).slice(0, 4);
   res.render('product', { title: product.name, product, specs: parseSpecs(product.specs), related });
 });
 
 // ---------- Cart ----------
 
-router.post('/cart/add', (req, res) => {
-  const product = getProduct({ id: toIntOrNull(req.body.product_id) });
+router.post('/cart/add', async (req, res) => {
+  const product = await getProduct({ id: toIntOrNull(req.body.product_id) });
   const mode = req.body.mode === 'stock' ? 'stock' : 'source';
   if (!product || !product.active || !modeAvailable(product, mode)) {
     flash(req, 'error', 'That product option is not available.');
@@ -85,18 +90,19 @@ router.post('/cart/add', (req, res) => {
   res.redirect(req.body.buy_now ? '/checkout' : '/cart');
 });
 
-router.get('/cart', (req, res) => {
-  res.render('cart', { title: 'Your cart', ...hydrateCart(req.session.cart) });
+router.get('/cart', async (req, res) => {
+  res.render('cart', { title: 'Your cart', ...(await hydrateCart(req.session.cart)) });
 });
 
-router.post('/cart/update', (req, res) => {
+router.post('/cart/update', async (req, res) => {
   const cart = req.session.cart || [];
+  const ids = [...new Set(cart.map((i) => i.id))];
+  const moqs = new Map(
+    ids.length ? (await db.all(`SELECT id, moq FROM products WHERE id IN (${ids.map(() => '?').join(', ')})`, ids)).map((r) => [r.id, r.moq]) : []
+  );
   cart.forEach((item, i) => {
     const q = toIntOrNull(req.body[`qty_${i}`]);
-    if (q !== null) {
-      const moq = item.mode === 'source' ? (db.prepare('SELECT moq FROM products WHERE id = ?').get(item.id) || {}).moq || 1 : 1;
-      item.qty = Math.max(moq, q);
-    }
+    if (q !== null) item.qty = Math.max(item.mode === 'source' ? moqs.get(item.id) || 1 : 1, q);
     if (req.body[`notes_${i}`] !== undefined) item.notes = trim(req.body[`notes_${i}`], 200);
   });
   req.session.cart = cart;
@@ -114,8 +120,8 @@ router.post('/cart/remove', (req, res) => {
 
 // ---------- Checkout ----------
 
-router.get('/checkout', (req, res) => {
-  const cart = hydrateCart(req.session.cart);
+router.get('/checkout', async (req, res) => {
+  const cart = await hydrateCart(req.session.cart);
   if (!cart.lines.length) return res.redirect('/cart');
   const u = req.user || {};
   res.render('checkout', {
@@ -127,8 +133,8 @@ router.get('/checkout', (req, res) => {
   });
 });
 
-router.post('/checkout', (req, res) => {
-  const cart = hydrateCart(req.session.cart);
+router.post('/checkout', async (req, res) => {
+  const cart = await hydrateCart(req.session.cart);
   if (!cart.lines.length) return res.redirect('/cart');
   const form = {
     customer_name: trim(req.body.customer_name, 120),
@@ -151,30 +157,28 @@ router.post('/checkout', (req, res) => {
   }
 
   const ref = makeRef('LH');
-  const placeOrder = db.transaction(() => {
-    const { lastInsertRowid: orderId } = db
-      .prepare(
-        `INSERT INTO orders (ref, user_id, customer_name, email, phone, company, country, city, delivery_address, shipping_method, notes, estimate_total)
-         VALUES (@ref, @user_id, @customer_name, @email, @phone, @company, @country, @city, @delivery_address, @shipping_method, @notes, @estimate_total)`
-      )
-      .run({ ...form, ref, user_id: req.user ? req.user.id : null, estimate_total: cart.estimate || null });
-    const addItem = db.prepare(
-      `INSERT INTO order_items (order_id, product_id, product_name, sku, mode, qty, unit, unit_price, notes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  const orderId = await db.transaction(async (tx) => {
+    const id = await tx.insert(
+      `INSERT INTO orders (ref, user_id, customer_name, email, phone, company, country, city, delivery_address, shipping_method, notes, estimate_total)
+       VALUES (@ref, @user_id, @customer_name, @email, @phone, @company, @country, @city, @delivery_address, @shipping_method, @notes, @estimate_total)`,
+      { ...form, ref, user_id: req.user ? req.user.id : null, estimate_total: cart.estimate || null }
     );
     for (const l of cart.lines) {
-      addItem.run(orderId, l.product.id, l.product.name, l.product.sku, l.mode, l.qty, l.product.unit, l.price ?? null, l.notes || null);
+      await tx.run(
+        `INSERT INTO order_items (order_id, product_id, product_name, sku, mode, qty, unit, unit_price, notes)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [id, l.product.id, l.product.name, l.product.sku, l.mode, l.qty, l.product.unit, l.price ?? null, l.notes || null]
+      );
     }
-    db.prepare('INSERT INTO order_events (order_id, status, message, created_by) VALUES (?, ?, ?, ?)').run(
-      orderId,
+    await tx.run('INSERT INTO order_events (order_id, status, message, created_by) VALUES (?, ?, ?, ?)', [
+      id,
       'received',
       'Order placed online.',
-      req.user ? req.user.id : null
-    );
-    return orderId;
+      req.user ? req.user.id : null,
+    ]);
+    return id;
   });
-  const orderId = placeOrder();
-  notify.notifyNewOrder(orderId, siteUrl(req));
+  runInBackground(notify.notifyNewOrder(orderId, siteUrl(req)));
 
   req.session.cart = [];
   req.session.guestOrders = [...(req.session.guestOrders || []), ref].slice(-20);
@@ -183,29 +187,32 @@ router.post('/checkout', (req, res) => {
 
 // ---------- Order view & tracking (guests and customers) ----------
 
-router.get('/orders/:ref', (req, res) => {
-  const order = orderForViewer(req, req.params.ref);
+router.get('/orders/:ref', async (req, res) => {
+  const order = await orderForViewer(req, req.params.ref);
   if (!order) {
     flash(req, 'info', 'Enter your order number and email to view this order.');
     return res.redirect(`/track?ref=${encodeURIComponent(req.params.ref)}`);
   }
-  res.render('order', { title: `Order ${order.ref}`, ...loadOrderDetail(order), placed: Boolean(req.query.placed) });
+  res.render('order', { title: `Order ${order.ref}`, ...(await loadOrderDetail(order)), placed: Boolean(req.query.placed) });
 });
 
-router.post('/orders/:ref/accept', (req, res) => {
-  const order = orderForViewer(req, req.params.ref);
+router.post('/orders/:ref/accept', async (req, res) => {
+  const order = await orderForViewer(req, req.params.ref);
   if (!order) return res.redirect('/track');
   if (order.status !== 'quoted') {
     flash(req, 'error', 'This quotation can no longer be accepted online. Please contact us.');
     return res.redirect(`/orders/${order.ref}`);
   }
-  db.prepare("UPDATE orders SET status = 'accepted', updated_at = datetime('now') WHERE id = ?").run(order.id);
-  db.prepare('INSERT INTO order_events (order_id, status, message, created_by) VALUES (?, ?, ?, ?)').run(
-    order.id,
-    'accepted',
-    'Customer accepted the quotation online.',
-    req.user ? req.user.id : null
-  );
+  // Only a quote that is still open can be accepted (guards against double clicks).
+  const { changes } = await db.run("UPDATE orders SET status = 'accepted', updated_at = now() WHERE id = ? AND status = 'quoted'", [order.id]);
+  if (changes) {
+    await db.run('INSERT INTO order_events (order_id, status, message, created_by) VALUES (?, ?, ?, ?)', [
+      order.id,
+      'accepted',
+      'Customer accepted the quotation online.',
+      req.user ? req.user.id : null,
+    ]);
+  }
   flash(req, 'success', 'Thank you! Quotation accepted. We will send you the invoice and payment details shortly.');
   res.redirect(`/orders/${order.ref}`);
 });
@@ -214,10 +221,10 @@ router.get('/track', (req, res) => {
   res.render('track', { title: 'Track your order', form: { ref: trim(req.query.ref, 40), email: '' }, error: null });
 });
 
-router.post('/track', (req, res) => {
+router.post('/track', async (req, res) => {
   const ref = trim(req.body.ref, 40).toUpperCase();
   const email = trim(req.body.email, 160).toLowerCase();
-  const order = db.prepare('SELECT ref FROM orders WHERE ref = ? AND lower(email) = ?').get(ref, email);
+  const order = await db.get('SELECT ref FROM orders WHERE ref = ? AND lower(email) = ?', [ref, email]);
   if (!order) {
     return res.status(404).render('track', { title: 'Track your order', form: { ref, email }, error: 'We could not find an order with that number and email.' });
   }
@@ -236,7 +243,7 @@ router.get('/request', (req, res) => {
   });
 });
 
-router.post('/request', ...withUpload(upload.single('image')), (req, res) => {
+router.post('/request', ...withUpload(upload.single('image')), async (req, res) => {
   const form = {
     name: trim(req.body.name, 120),
     email: trim(req.body.email, 160).toLowerCase(),
@@ -251,15 +258,17 @@ router.post('/request', ...withUpload(upload.single('image')), (req, res) => {
   if (!form.name) errors.push('Please enter your name.');
   if (!EMAIL_RE.test(form.email)) errors.push('Please enter a valid email address.');
   if (!form.description) errors.push('Please describe the product you need.');
-  if (form.category_id && !db.prepare('SELECT 1 FROM categories WHERE id = ?').get(form.category_id)) form.category_id = null;
+  if (form.category_id && !(await db.get('SELECT 1 AS ok FROM categories WHERE id = ?', [form.category_id]))) form.category_id = null;
   if (errors.length) return res.status(400).render('request', { title: 'Request a product', form, errors });
 
   const ref = makeRef('RQ');
-  const { lastInsertRowid: requestId } = db.prepare(
+  const image = req.file ? await saveImage(req.file, 'requests') : null;
+  const requestId = await db.insert(
     `INSERT INTO sourcing_requests (ref, user_id, name, email, phone, country, category_id, description, quantity, target_price, image_filename)
-     VALUES (@ref, @user_id, @name, @email, @phone, @country, @category_id, @description, @quantity, @target_price, @image)`
-  ).run({ ...form, ref, user_id: req.user ? req.user.id : null, image: req.file ? req.file.filename : null });
-  notify.notifyNewRequest(requestId, siteUrl(req));
+     VALUES (@ref, @user_id, @name, @email, @phone, @country, @category_id, @description, @quantity, @target_price, @image)`,
+    { ...form, ref, user_id: req.user ? req.user.id : null, image }
+  );
+  runInBackground(notify.notifyNewRequest(requestId, siteUrl(req)));
   res.render('request-sent', { title: 'Request received', ref });
 });
 

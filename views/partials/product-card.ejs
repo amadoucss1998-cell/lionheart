@@ -1,6 +1,6 @@
 <article class="pcard">
   <a class="thumb" href="/products/<%= p.slug %>">
-    <% if (p.image) { %><img src="/uploads/<%= p.image %>" alt="<%= p.name %>" loading="lazy"><% } else { %><div class="placeholder"><%- icon(p.category_icon || 'box', 56) %></div><% } %>
+    <% if (p.image) { %><img src="<%= img(p.image) %>" alt="<%= p.name %>" loading="lazy"><% } else { %><div class="placeholder"><%- icon(p.category_icon || 'box', 56) %></div><% } %>
     <div class="tags">
       <% if (p.stock_available) { %><span class="tag tag-stock">In stock</span><% } %>
       <% if (p.sourcing_available) { %><span class="tag tag-source">From China</span><% } %>

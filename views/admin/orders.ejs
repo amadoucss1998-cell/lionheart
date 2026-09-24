@@ -11,7 +11,7 @@
   <% if (!orders.length) { %><tr><td colspan="6" class="center muted" style="padding:32px">No orders found.</td></tr><% } %>
   <% orders.forEach(o => { %>
     <tr>
-      <td><a href="/admin/orders/<%= o.ref %>"><strong><%= o.ref %></strong></a><div class="small muted"><%= new Date(o.created_at + 'Z').toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) %></div></td>
+      <td><a href="/admin/orders/<%= o.ref %>"><strong><%= o.ref %></strong></a><div class="small muted"><%= h.formatDate(o.created_at) %></div></td>
       <td><%= o.customer_name %><div class="small muted"><%= o.phone %><%= o.company ? ' · ' + o.company : '' %></div></td>
       <td class="small"><%= [o.city, o.country].filter(Boolean).join(', ') %><div class="muted"><%= h.shippingLabel(o.shipping_method) %></div></td>
       <td><%= o.item_count %> <% (o.modes || '').split(',').filter(Boolean).forEach(m => { %><span class="tag tag-<%= m %>"><%= m === 'source' ? 'China' : 'Stock' %></span> <% }) %></td>

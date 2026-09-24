@@ -10,10 +10,11 @@ process.env.ADMIN_EMAIL = 'admin@test.local';
 process.env.ADMIN_PASSWORD = 'admin-pass-123';
 process.env.SESSION_SECRET = 'test-secret';
 
-const { ensureAdmin, seedCatalog } = require('../src/seed');
+require('./helpers').useTestDatabase();
+const { bootstrap } = require('../src/seed');
 const { createApp } = require('../src/app');
 const { db } = require('../src/db');
-const { makeBrowser } = require('./helpers');
+const { makeBrowser, resetDatabase } = require('./helpers');
 
 let server;
 let browser;
@@ -21,21 +22,21 @@ let browser;
 before(async () => {
   const log = console.log;
   console.log = () => {};
-  ensureAdmin();
-  seedCatalog();
+  await resetDatabase(db);
+  await bootstrap();
   console.log = log;
   server = createApp().listen(0);
   await new Promise((r) => server.once('listening', r));
   browser = makeBrowser(`http://127.0.0.1:${server.address().port}`);
 });
 
-after(() => {
+after(async () => {
   server.close();
-  db.close();
+  await db.close();
   fs.rmSync(tmp, { recursive: true, force: true });
 });
 
-const productBySku = (sku) => db.prepare('SELECT * FROM products WHERE sku = ?').get(sku);
+const productBySku = (sku) => db.get('SELECT * FROM products WHERE sku = ?', [sku]);
 
 test('public pages render with seeded catalog', async () => {
   const b = browser();
@@ -60,7 +61,7 @@ test('POST without CSRF token is rejected', async () => {
 });
 
 test('guest can order, admin quotes, customer accepts', async () => {
-  const tile = productBySku('TL-6060-P');
+  const tile = await productBySku('TL-6060-P');
   const guest = browser();
 
   // Quantity below MOQ is raised to the MOQ for China sourcing.
@@ -85,8 +86,8 @@ test('guest can order, admin quotes, customer accepts', async () => {
   const ref = orderUrl.split('/').pop();
   assert.match(ref, /^LH-\d{8}-[0-9A-F]{6}$/);
 
-  const order = db.prepare('SELECT * FROM orders WHERE ref = ?').get(ref);
-  const items = db.prepare('SELECT * FROM order_items WHERE order_id = ? ORDER BY id').all(order.id);
+  const order = (await db.get('SELECT * FROM orders WHERE ref = ?', [ref]));
+  const items = (await db.all('SELECT * FROM order_items WHERE order_id = ? ORDER BY id', [order.id]));
   assert.strictEqual(items.length, 2);
   assert.strictEqual(items[0].qty, tile.moq);
   assert.strictEqual(order.estimate_total, tile.moq * tile.china_price + 10 * tile.stock_price);
@@ -115,21 +116,21 @@ test('guest can order, admin quotes, customer accepts', async () => {
   form.append('unit_price', '7');
   form.append('unit_price', '');
   await admin.req(`/admin/orders/${ref}/quote`, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: form.toString() });
-  assert.strictEqual(db.prepare('SELECT status FROM orders WHERE ref = ?').get(ref).status, 'received');
+  assert.strictEqual((await db.get('SELECT status FROM orders WHERE ref = ?', [ref])).status, 'received');
 
   form.set('_csrf', token);
   form.delete('unit_price');
   form.append('unit_price', '7');
   form.append('unit_price', '11');
   await admin.req(`/admin/orders/${ref}/quote`, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: form.toString() });
-  const quoted = db.prepare('SELECT * FROM orders WHERE ref = ?').get(ref);
+  const quoted = (await db.get('SELECT * FROM orders WHERE ref = ?', [ref]));
   assert.strictEqual(quoted.status, 'quoted');
   assert.strictEqual(quoted.quoted_total, tile.moq * 7 + 10 * 11 + 350);
 
   const view = await (await guest.req(orderUrl)).text();
   assert.match(view, /Your quotation is ready/);
   res = await guest.post(`/orders/${ref}/accept`, {}, orderUrl);
-  assert.strictEqual(db.prepare('SELECT status FROM orders WHERE ref = ?').get(ref).status, 'accepted');
+  assert.strictEqual((await db.get('SELECT status FROM orders WHERE ref = ?', [ref])).status, 'accepted');
 
   res = await admin.post(`/admin/orders/${ref}/status`, { status: 'shipped', tracking_number: 'MSKU1234567', message: 'Loaded' }, `/admin/orders/${ref}`);
   const shipped = await (await guest.req(orderUrl)).text();
@@ -138,7 +139,7 @@ test('guest can order, admin quotes, customer accepts', async () => {
 
 test('registration attaches guest orders and account lists them', async () => {
   const b = browser();
-  const p = productBySku('SW-WC-1P');
+  const p = await productBySku('SW-WC-1P');
   await b.post('/cart/add', { product_id: p.id, mode: 'stock', qty: 2 }, `/products/${p.slug}`);
   const res = await b.post('/checkout', { customer_name: 'Ama', email: 'ama@example.com', phone: '1', country: 'Ghana' }, '/checkout');
   const ref = res.headers.get('location').split('/').pop().split('?')[0];
@@ -164,9 +165,9 @@ test('admin can create a product with an image and bulk import CSV', async () =>
   fd.append('images', new Blob([png], { type: 'image/png' }), 'cab.png');
   let res = await admin.req('/admin/products/new', { method: 'POST', body: fd });
   assert.strictEqual(res.status, 302);
-  const p = productBySku('KC-001');
+  const p = await productBySku('KC-001');
   assert.ok(p);
-  const img = db.prepare('SELECT * FROM product_images WHERE product_id = ?').get(p.id);
+  const img = (await db.get('SELECT * FROM product_images WHERE product_id = ?', [p.id]));
   assert.ok(img && fs.existsSync(path.join(tmp, 'uploads', img.filename)));
   assert.strictEqual((await admin.req(`/uploads/${img.filename}`)).status, 200);
 
@@ -188,8 +189,8 @@ test('admin can create a product with an image and bulk import CSV', async () =>
   const html = await (await admin.req('/admin/products-import', { method: 'POST', body: fd2 })).text();
   assert.match(html, /1 created, 1 updated/);
   assert.match(html, /missing name/);
-  assert.strictEqual(productBySku('GB-12').specs, 'Size: 1200x2400\nThickness: 12mm');
-  assert.strictEqual(productBySku('KC-001').china_price, 1100);
+  assert.strictEqual((await productBySku('GB-12')).specs, 'Size: 1200x2400\nThickness: 12mm');
+  assert.strictEqual((await productBySku('KC-001')).china_price, 1100);
 });
 
 test('sourcing request with photo is stored', async () => {
@@ -202,7 +203,7 @@ test('sourcing request with photo is stored', async () => {
   const res = await b.req('/request', { method: 'POST', body: fd });
   assert.strictEqual(res.status, 200);
   assert.match(await res.text(), /RQ-\d{8}-/);
-  assert.ok(db.prepare("SELECT 1 FROM sourcing_requests WHERE email = 'kofi@example.com'").get());
+  assert.ok((await db.get("SELECT 1 FROM sourcing_requests WHERE email = 'kofi@example.com'")));
 });
 
 test('open redirect via next= is blocked', async () => {
