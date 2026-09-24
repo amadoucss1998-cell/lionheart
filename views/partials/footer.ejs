@@ -1,0 +1,51 @@
+</main>
+<footer class="footer">
+  <div class="container">
+    <div class="cols">
+      <div>
+        <img src="/static/img/logo-white.png" alt="Lionheart" width="76" height="56">
+        <p><%= settings.tagline %></p>
+        <p class="small">Clearing &amp; forwarding · Procurement &amp; logistics · General trading</p>
+      </div>
+      <div>
+        <h4>Shop</h4>
+        <ul>
+          <li><a href="/products">All products</a></li>
+          <li><a href="/products?mode=stock">Ready stock</a></li>
+          <li><a href="/products?mode=source">Source from China</a></li>
+          <li><a href="/request">Request a product</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Help</h4>
+        <ul>
+          <li><a href="/how-it-works">How it works</a></li>
+          <li><a href="/track">Track an order</a></li>
+          <li><a href="/account">My account</a></li>
+          <li><a href="/contact">Contact us</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <ul>
+          <li><a href="tel:<%= settings.phone %>"><%= settings.phone %></a></li>
+          <li><a href="mailto:<%= settings.email %>"><%= settings.email %></a></li>
+          <li><%= settings.address_china %></li>
+          <li><%= settings.address_dubai %></li>
+          <li><%= settings.address_liberia %></li>
+        </ul>
+      </div>
+    </div>
+    <div class="legal"><span>© <%= new Date().getFullYear() %> <%= settings.company_name %>. All rights reserved.</span><span class="spacer"></span><a href="<%= settings.website %>"><%= settings.website.replace(/^https?:\/\//, '') %></a></div>
+  </div>
+</footer>
+<% if (settings.whatsapp) { %>
+<a class="wa-float" href="https://wa.me/<%= settings.whatsapp.replace(/\D/g, '') %>" target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp"><%- icon('chat', 26) %></a>
+<% } %>
+<script src="/vendor/gsap/gsap.min.js"></script>
+<script src="/vendor/gsap/ScrollTrigger.min.js"></script>
+<script src="/static/js/app.js"></script>
+<script src="/static/js/motion.js"></script>
+<% if (locals.hero3d) { %><script type="module" src="/static/js/hero3d.js"></script><% } %>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<%- include('../partials/header') %>
+<div class="container page">
+  <div class="page-head">
+    <div><h1>Hello, <%= user.name.split(' ')[0] %></h1><span class="muted"><%= user.email %></span></div>
+    <div class="spacer"></div>
+    <a class="btn btn-ghost btn-sm" href="/account/profile">Edit profile</a>
+    <form method="post" action="/logout" class="inline-form"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-ghost btn-sm" type="submit">Sign out</button></form>
+  </div>
+  <div class="card mb-2"><div class="card-body">
+    <h2>My orders</h2>
+    <% if (!orders.length) { %>
+      <p class="muted">You have no orders yet. <a href="/products">Start shopping</a></p>
+    <% } else { %>
+    <div class="table-wrap"><table class="table">
+      <thead><tr><th>Order</th><th>Date</th><th>Items</th><th>Status</th><th class="right">Total</th><th></th></tr></thead>
+      <tbody>
+      <% orders.forEach(o => { %>
+        <tr>
+          <td><a href="/orders/<%= o.ref %>"><strong><%= o.ref %></strong></a></td>
+          <td class="nowrap"><%= new Date(o.created_at + 'Z').toLocaleDateString('en-GB', { dateStyle: 'medium' }) %></td>
+          <td><%= o.item_count %></td>
+          <td><span class="status status-<%= o.status %>"><%= h.statusLabel(o.status) %></span></td>
+          <td class="right nowrap"><%= o.quoted_total !== null ? fmt(o.quoted_total) : o.estimate_total ? `~${fmt(o.estimate_total)}` : 'Pending' %></td>
+          <td class="right"><% if (o.status === 'quoted') { %><a class="btn btn-gold btn-sm" href="/orders/<%= o.ref %>">Review quote</a><% } else { %><a class="btn btn-ghost btn-sm" href="/orders/<%= o.ref %>">View</a><% } %></td>
+        </tr>
+      <% }) %>
+      </tbody>
+    </table></div>
+    <% } %>
+  </div></div>
+  <div class="card"><div class="card-body">
+    <div class="row"><h2 class="mb-0">My sourcing requests</h2><div class="spacer"></div><a class="btn btn-outline btn-sm" href="/request"><%- icon('plus', 16) %> New request</a></div>
+    <% if (!requests.length) { %>
+      <p class="muted mt-1 mb-0">No requests yet.</p>
+    <% } else { %>
+    <div class="table-wrap mt-1"><table class="table">
+      <thead><tr><th>Ref</th><th>Request</th><th>Status</th><th>Our reply</th></tr></thead>
+      <tbody>
+      <% requests.forEach(r => { %>
+        <tr><td class="nowrap"><%= r.ref %></td><td><%= r.description.length > 120 ? r.description.slice(0, 120) + '…' : r.description %></td>
+        <td><span class="status status-<%= r.status %>"><%= (h.SOURCING_STATUSES.find(s => s.key === r.status) || {}).label %></span></td>
+        <td class="small prose"><%= r.admin_reply || '—' %></td></tr>
+      <% }) %>
+      </tbody>
+    </table></div>
+    <% } %>
+  </div></div>
+</div>
+<%- include('../partials/footer') %>

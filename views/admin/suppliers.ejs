@@ -1,0 +1,43 @@
+<%- include('_header') %>
+<div class="admin-top"><h1>Suppliers</h1><span class="muted small">Private: never shown to customers.</span></div>
+<% const s = editing || {}; %>
+<div class="admin-grid">
+  <div class="card table-wrap"><table class="table">
+    <thead><tr><th>Supplier</th><th>Contact</th><th>Location</th><th>Products</th><th></th></tr></thead>
+    <tbody>
+    <% if (!suppliers.length) { %><tr><td colspan="5" class="center muted" style="padding:32px">No suppliers yet. Add your factory and partner contacts here.</td></tr><% } %>
+    <% suppliers.forEach(x => { %>
+      <tr>
+        <td><strong><%= x.name %></strong><% if (x.notes) { %><div class="small muted"><%= x.notes.slice(0, 80) %></div><% } %></td>
+        <td class="small"><%= x.contact_person || '' %><% if (x.phone) { %><br><%= x.phone %><% } %><% if (x.wechat) { %><br>WeChat: <%= x.wechat %><% } %><% if (x.email) { %><br><%= x.email %><% } %></td>
+        <td class="small"><%= [x.city, x.country].filter(Boolean).join(', ') %></td>
+        <td><%= x.product_count %></td>
+        <td class="right nowrap"><a class="btn btn-outline btn-sm" href="/admin/suppliers?edit=<%= x.id %>">Edit</a>
+          <form class="inline-form" method="post" action="/admin/suppliers/<%= x.id %>/delete" data-confirm="Delete supplier <%= x.name %>?"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-danger btn-sm" type="submit">Delete</button></form></td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table></div>
+  <div class="card"><div class="card-body">
+    <h2><%= editing ? 'Edit supplier' : 'Add supplier' %></h2>
+    <form method="post" action="/admin/suppliers">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <% if (editing) { %><input type="hidden" name="id" value="<%= s.id %>"><% } %>
+      <div class="field"><label for="sname">Company name *</label><input id="sname" name="name" type="text" required value="<%= s.name || '' %>"></div>
+      <div class="field"><label for="scp">Contact person</label><input id="scp" name="contact_person" type="text" value="<%= s.contact_person || '' %>"></div>
+      <div class="grid-2">
+        <div class="field"><label for="sphone">Phone</label><input id="sphone" name="phone" type="text" value="<%= s.phone || '' %>"></div>
+        <div class="field"><label for="swc">WeChat</label><input id="swc" name="wechat" type="text" value="<%= s.wechat || '' %>"></div>
+      </div>
+      <div class="field"><label for="semail">Email</label><input id="semail" name="email" type="text" value="<%= s.email || '' %>"></div>
+      <div class="grid-2">
+        <div class="field"><label for="scity">City</label><input id="scity" name="city" type="text" value="<%= s.city || '' %>" placeholder="Guangzhou, Foshan, Yiwu…"></div>
+        <div class="field"><label for="scountry">Country</label><input id="scountry" name="country" type="text" value="<%= s.country || 'China' %>"></div>
+      </div>
+      <div class="field"><label for="snotes">Notes</label><textarea id="snotes" name="notes" placeholder="Products, payment terms, quality notes…"><%= s.notes || '' %></textarea></div>
+      <button class="btn btn-gold" type="submit">Save supplier</button>
+      <% if (editing) { %><a class="btn btn-ghost" href="/admin/suppliers">Cancel</a><% } %>
+    </form>
+  </div></div>
+</div>
+<%- include('_footer') %>

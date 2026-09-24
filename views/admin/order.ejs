@@ -1,0 +1,101 @@
+<%- include('_header') %>
+<% const n = (v) => v === null || v === undefined ? '' : v;
+   const waNumber = (order.phone || '').replace(/\D/g, ''); %>
+<div class="admin-top">
+  <div><div class="breadcrumbs"><a href="/admin/orders">Orders</a> / <%= order.ref %></div>
+  <h1>Order <%= order.ref %> <span class="status status-<%= order.status %>" style="vertical-align:middle"><%= h.statusLabel(order.status) %></span></h1>
+  <span class="small muted">Placed <%= new Date(order.created_at + 'Z').toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) %><%= order.user_id ? ' · registered customer' : ' · guest checkout' %></span></div>
+  <div class="spacer"></div>
+  <% if (waNumber) { %><a class="btn btn-whatsapp" target="_blank" rel="noopener" href="https://wa.me/<%= waNumber %>?text=<%= encodeURIComponent(`Hello ${order.customer_name}, this is Lionheart regarding your order ${order.ref}.`) %>"><%- icon('chat', 18) %> WhatsApp customer</a><% } %>
+  <a class="btn btn-ghost" href="mailto:<%= order.email %>?subject=<%= encodeURIComponent('Your Lionheart order ' + order.ref) %>">Email</a>
+  <a class="btn btn-ghost" href="/orders/<%= order.ref %>" target="_blank">Customer view</a>
+</div>
+
+<div class="card mb-2"><div class="card-body"><%- include('../partials/order-progress') %></div></div>
+
+<div class="admin-grid">
+  <div class="stack">
+    <form class="card" method="post" action="/admin/orders/<%= order.ref %>/quote" data-quote-form>
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <div class="card-body">
+        <h2>Items &amp; quotation</h2>
+        <div class="table-wrap"><table class="table">
+          <thead><tr><th>Product</th><th>Option</th><th class="right">Qty</th><th>Unit price (<%= settings.currency %>)</th><th class="right">Line total</th></tr></thead>
+          <tbody>
+          <% items.forEach(i => { %>
+            <tr data-line data-qty="<%= i.qty %>">
+              <td><% if (i.product_id) { %><a href="/admin/products/<%= i.product_id %>"><strong><%= i.product_name %></strong></a><% } else { %><strong><%= i.product_name %></strong><% } %>
+                <div class="small muted"><%= i.sku || '' %></div>
+                <% if (i.notes) { %><div class="small">Customer note: <em><%= i.notes %></em></div><% } %>
+                <% if (i.supplier) { %><div class="small muted">Supplier: <%= i.supplier.name %><%= i.supplier.phone ? ' · ' + i.supplier.phone : '' %><%= i.supplier.wechat ? ' · WeChat ' + i.supplier.wechat : '' %></div><% } %></td>
+              <td><span class="tag tag-<%= i.mode %>"><%= h.MODES[i.mode].short %></span></td>
+              <td class="right nowrap"><%= i.qty %> <%= i.unit %></td>
+              <td style="width:140px"><input type="number" step="0.01" min="0" name="unit_price" value="<%= n(i.unit_price) %>" aria-label="Unit price"></td>
+              <td class="right nowrap" data-line-total>—</td>
+            </tr>
+          <% }) %>
+          </tbody>
+        </table></div>
+        <div class="grid-3 mt-2">
+          <div class="field"><label>Goods total</label><div style="padding:10px 0;font-weight:700"><span data-goods>0.00</span></div></div>
+          <div class="field"><label for="shipping_cost">Shipping &amp; freight</label><input id="shipping_cost" name="shipping_cost" type="number" step="0.01" min="0" value="<%= n(order.shipping_cost) %>"></div>
+          <div class="field"><label for="other_charges">Other charges</label><input id="other_charges" name="other_charges" type="number" step="0.01" value="<%= n(order.other_charges) %>"><div class="hint">Clearing, inspection, service fee…</div></div>
+        </div>
+        <div class="field"><label for="quoted_total">Quotation total</label><input id="quoted_total" name="quoted_total" type="number" step="0.01" min="0" value="<%= n(order.quoted_total) %>"><div class="hint">Leave empty to use goods + shipping + other charges.</div></div>
+        <div class="field"><label for="quote_message">Message to customer (with the quotation)</label><textarea id="quote_message" name="quote_message" rows="3" placeholder="e.g. Prices valid for 7 days. Estimated delivery to Monrovia: 45 days after payment. 50% deposit required."></textarea></div>
+        <div class="row">
+          <button class="btn btn-outline" type="submit">Save prices</button>
+          <button class="btn btn-gold" type="submit" name="send_quote" value="1"><%- icon('check', 18) %> Save &amp; send quotation to customer</button>
+        </div>
+        <% if (order.estimate_total) { %><p class="small muted mt-1 mb-0">Catalog estimate at order time: <%= fmt(order.estimate_total) %></p><% } %>
+      </div>
+    </form>
+
+    <form class="card" method="post" action="/admin/orders/<%= order.ref %>/status">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <div class="card-body">
+        <h2>Update status</h2>
+        <div class="grid-2">
+          <div class="field"><label for="status">Status</label>
+            <select id="status" name="status"><% h.ORDER_STATUSES.forEach(s => { %><option value="<%= s.key %>" <%= order.status === s.key ? 'selected' : '' %>><%= s.label %></option><% }) %></select></div>
+          <div class="field"><label for="tracking_number">Container / B/L / tracking no.</label><input id="tracking_number" name="tracking_number" type="text" value="<%= order.tracking_number || '' %>"></div>
+        </div>
+        <div class="field"><label for="message">Message to customer (shown in order history)</label><textarea id="message" name="message" rows="2" placeholder="e.g. Goods loaded in container MSKU1234567, ETA Monrovia 12 November."></textarea></div>
+        <button class="btn" type="submit">Update order</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="stack">
+    <div class="card"><div class="card-body">
+      <h2>Customer</h2>
+      <dl class="kv">
+        <dt>Name</dt><dd><%= order.customer_name %></dd>
+        <% if (order.company) { %><dt>Company</dt><dd><%= order.company %></dd><% } %>
+        <dt>Email</dt><dd><a href="mailto:<%= order.email %>"><%= order.email %></a></dd>
+        <dt>Phone</dt><dd><a href="tel:<%= order.phone %>"><%= order.phone %></a></dd>
+        <dt>Destination</dt><dd><%= [order.city, order.country].filter(Boolean).join(', ') %></dd>
+        <% if (order.delivery_address) { %><dt>Address</dt><dd class="prose"><%= order.delivery_address %></dd><% } %>
+        <dt>Shipping</dt><dd><%= h.shippingLabel(order.shipping_method) %></dd>
+        <% if (order.notes) { %><dt>Order notes</dt><dd class="prose"><%= order.notes %></dd><% } %>
+      </dl>
+    </div></div>
+    <form class="card" method="post" action="/admin/orders/<%= order.ref %>/notes">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <div class="card-body">
+        <h2>Internal notes</h2>
+        <textarea name="internal_notes" rows="4" placeholder="Only visible to your team: supplier quotes, margins, payment received…"><%= order.internal_notes || '' %></textarea>
+        <button class="btn btn-outline btn-sm mt-1" type="submit">Save notes</button>
+      </div>
+    </form>
+    <div class="card"><div class="card-body">
+      <h2>History</h2>
+      <ul class="timeline">
+        <% events.slice().reverse().forEach(e => { %>
+          <li><strong><%= h.statusLabel(e.status) %></strong><div class="when"><%= new Date(e.created_at + 'Z').toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) %><%= e.by_name ? ' · ' + e.by_name : '' %></div><% if (e.message) { %><div class="small prose"><%= e.message %></div><% } %></li>
+        <% }) %>
+      </ul>
+    </div></div>
+  </div>
+</div>
+<%- include('_footer') %>

@@ -1,0 +1,11 @@
+<% const flow = ['received', 'quoted', 'accepted', 'paid', 'purchasing', 'inspection', 'shipped', 'arrived', 'delivered'];
+   const cur = flow.indexOf(order.status); %>
+<% if (order.status === 'cancelled') { %>
+  <span class="status status-cancelled">Cancelled</span>
+<% } else { %>
+<div class="progress">
+  <% flow.forEach((k, i) => { %>
+    <div class="step <%= i < cur ? 'done' : i === cur ? 'current' : '' %>"><div class="b"><% if (i < cur) { %><%- icon('check', 12) %><% } %></div><%= h.statusLabel(k) %></div>
+  <% }) %>
+</div>
+<% } %>

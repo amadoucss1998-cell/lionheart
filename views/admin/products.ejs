@@ -1,0 +1,27 @@
+<%- include('_header') %>
+<div class="admin-top"><h1>Products <span class="muted small">(<%= total %>)</span></h1><div class="spacer"></div>
+  <a class="btn btn-ghost" href="/admin/products-import">Bulk import (CSV)</a>
+  <a class="btn btn-gold" href="/admin/products/new"><%- icon('plus', 18) %> Add product</a></div>
+<form class="toolbar card card-body" method="get" action="/admin/products" style="padding:12px">
+  <input type="search" name="q" value="<%= q %>" placeholder="Search name, SKU, description…" style="flex:1;min-width:200px">
+  <select name="category" style="width:auto"><option value="">All categories</option><% categoriesNav.forEach(c => { %><option value="<%= c.slug %>" <%= category === c.slug ? 'selected' : '' %>><%= c.name %></option><% }) %></select>
+  <button class="btn" type="submit">Filter</button>
+</form>
+<div class="card table-wrap"><table class="table">
+  <thead><tr><th></th><th>Product</th><th>Category</th><th>China sourcing</th><th>Our stock</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+  <% if (!items.length) { %><tr><td colspan="7" class="center muted" style="padding:32px">No products yet. <a href="/admin/products/new">Add your first product</a>.</td></tr><% } %>
+  <% items.forEach(p => { %>
+    <tr>
+      <td class="thumbcell"><% if (p.image) { %><img src="/uploads/<%= p.image %>" alt=""><% } else { %><div class="placeholder"><%- icon(p.category_icon || 'box', 20) %></div><% } %></td>
+      <td><a href="/admin/products/<%= p.id %>"><strong><%= p.name %></strong></a><div class="small muted"><%= p.sku || 'no SKU' %></div></td>
+      <td class="small"><%= p.category_name || '—' %></td>
+      <td class="small nowrap"><% if (p.sourcing_available) { %><%= p.china_price !== null ? fmt(p.china_price) : 'On request' %> <span class="muted">MOQ <%= p.moq %></span><% } else { %><span class="muted">—</span><% } %></td>
+      <td class="small nowrap"><% if (p.stock_available) { %><%= p.stock_price !== null ? fmt(p.stock_price) : 'On request' %> <span class="muted"><%= p.stock_qty !== null ? `(${p.stock_qty})` : '' %></span><% } else { %><span class="muted">—</span><% } %></td>
+      <td><% if (p.active) { %><span class="tag tag-stock">Live</span><% } else { %><span class="tag tag-muted">Hidden</span><% } %><% if (p.featured) { %> <span class="tag tag-featured">Featured</span><% } %></td>
+      <td class="right nowrap"><a class="btn btn-ghost btn-sm" href="/products/<%= p.slug %>" target="_blank">View</a> <a class="btn btn-outline btn-sm" href="/admin/products/<%= p.id %>">Edit</a></td>
+    </tr>
+  <% }) %>
+  </tbody>
+</table></div>
+<%- include('_footer') %>

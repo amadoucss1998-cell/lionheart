@@ -1,0 +1,16 @@
+<%- include('partials/header') %>
+<div class="container page">
+  <div class="card auth-box"><div class="card-body">
+    <h1>Track your order</h1>
+    <p class="muted">Enter your order number (e.g. LH-20260924-A1B2C3) and the email you used when ordering.</p>
+    <% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
+    <form method="post" action="/track">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <div class="field"><label for="ref">Order number</label><input id="ref" name="ref" type="text" required value="<%= form.ref %>"></div>
+      <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" required value="<%= form.email %>"></div>
+      <button class="btn btn-block" type="submit">Find my order</button>
+    </form>
+    <p class="small muted mt-2 mb-0">Have an account? <a href="/login?next=/account">Sign in</a> to see all your orders.</p>
+  </div></div>
+</div>
+<%- include('partials/footer') %>

@@ -1,0 +1,97 @@
+<%- include('partials/header') %>
+<div class="container page">
+  <% if (placed) { %>
+    <div class="alert alert-success"><strong>Thank you! Your order <%= order.ref %> has been received.</strong><br>Our team will check prices, availability and shipping, then send your quotation, usually within 24–48 hours. Save your order number to track it.</div>
+  <% } %>
+  <div class="page-head">
+    <div><div class="breadcrumbs"><a href="<%= user ? '/account' : '/track' %>"><%= user ? 'My account' : 'Track order' %></a> / Order</div>
+    <h1>Order <%= order.ref %></h1>
+    <span class="muted small">Placed <%= new Date(order.created_at + 'Z').toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) %></span></div>
+    <div class="spacer"></div>
+    <span class="status status-<%= order.status %>"><%= h.statusLabel(order.status) %></span>
+  </div>
+
+  <div class="card mb-2"><div class="card-body">
+    <%- include('partials/order-progress') %>
+    <p class="mb-0 mt-1"><%= (h.ORDER_STATUSES.find(s => s.key === order.status) || {}).customer %></p>
+    <% if (order.tracking_number) { %><p class="mb-0 mt-1"><strong>Shipment / tracking no.:</strong> <%= order.tracking_number %></p><% } %>
+  </div></div>
+
+  <% if (order.status === 'quoted') { %>
+  <div class="quote-box mb-2">
+    <h2>Your quotation is ready</h2>
+    <% if (order.customer_message) { %><p class="prose"><%= order.customer_message %></p><% } %>
+    <div class="row" style="align-items:flex-end">
+      <div>
+        <div class="small muted">Goods: <%= fmt(order.goods_total) %><% if (order.shipping_cost) { %> · Shipping: <%= fmt(order.shipping_cost) %><% } %><% if (order.other_charges) { %> · Other charges: <%= fmt(order.other_charges) %><% } %></div>
+        <div style="font-size:1.8rem;font-weight:800;color:var(--navy-2)">Total: <%= fmt(order.quoted_total) %></div>
+      </div>
+      <div class="spacer"></div>
+      <form method="post" action="/orders/<%= order.ref %>/accept" data-confirm="Accept this quotation of <%= fmt(order.quoted_total) %>?">
+        <input type="hidden" name="_csrf" value="<%= csrf %>">
+        <button class="btn btn-gold btn-lg" type="submit"><%- icon('check') %> Accept quotation</button>
+      </form>
+      <% if (settings.whatsapp) { %><a class="btn btn-whatsapp btn-lg" target="_blank" rel="noopener" href="https://wa.me/<%= settings.whatsapp.replace(/\D/g, '') %>?text=<%= encodeURIComponent(`Hello Lionheart, I have a question about my quotation for order ${order.ref}.`) %>"><%- icon('chat') %> Discuss</a><% } %>
+    </div>
+  </div>
+  <% } else if (order.customer_message) { %>
+    <div class="alert alert-info"><strong>Message from Lionheart:</strong> <span class="prose"><%= order.customer_message %></span></div>
+  <% } %>
+
+  <% if (order.status === 'accepted') { %>
+    <div class="alert alert-info"><strong>Payment:</strong> <%= settings.payment_instructions %></div>
+  <% } %>
+
+  <div class="admin-grid">
+    <div class="card"><div class="card-body">
+      <h2>Items</h2>
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>Product</th><th>Buy option</th><th class="right">Qty</th><th class="right">Unit price</th><th class="right">Total</th></tr></thead>
+        <tbody>
+        <% items.forEach(i => { %>
+          <tr>
+            <td><strong><%= i.product_name %></strong><% if (i.sku) { %><div class="small muted"><%= i.sku %></div><% } %><% if (i.notes) { %><div class="small muted">Note: <%= i.notes %></div><% } %></td>
+            <td><span class="tag tag-<%= i.mode %>"><%= h.MODES[i.mode].short %></span></td>
+            <td class="right nowrap"><%= i.qty %> <%= i.unit %></td>
+            <td class="right nowrap"><%= i.unit_price !== null ? fmt(i.unit_price) : 'Pending' %></td>
+            <td class="right nowrap"><%= i.unit_price !== null ? fmt(i.unit_price * i.qty) : '—' %></td>
+          </tr>
+        <% }) %>
+        </tbody>
+      </table></div>
+      <div class="right mt-1">
+        <% if (order.quoted_total !== null) { %>
+          <div>Goods: <strong><%= fmt(order.goods_total) %></strong></div>
+          <% if (order.shipping_cost !== null) { %><div>Shipping: <strong><%= fmt(order.shipping_cost) %></strong></div><% } %>
+          <% if (order.other_charges !== null) { %><div>Other charges: <strong><%= fmt(order.other_charges) %></strong></div><% } %>
+          <div style="font-size:1.2rem">Total: <strong><%= fmt(order.quoted_total) %></strong></div>
+        <% } else if (order.estimate_total) { %>
+          <div class="muted">Estimated goods value: <strong><%= fmt(order.estimate_total) %></strong> (before shipping)</div>
+        <% } %>
+      </div>
+    </div></div>
+    <div class="stack">
+      <div class="card"><div class="card-body">
+        <h2>Delivery</h2>
+        <dl class="kv">
+          <dt>Name</dt><dd><%= order.customer_name %><%= order.company ? ` · ${order.company}` : '' %></dd>
+          <dt>Contact</dt><dd><%= order.email %><br><%= order.phone %></dd>
+          <dt>Destination</dt><dd><%= [order.city, order.country].filter(Boolean).join(', ') %><% if (order.delivery_address) { %><br><span class="muted"><%= order.delivery_address %></span><% } %></dd>
+          <dt>Shipping</dt><dd><%= h.shippingLabel(order.shipping_method) %></dd>
+        </dl>
+      </div></div>
+      <div class="card"><div class="card-body">
+        <h2>History</h2>
+        <ul class="timeline">
+          <% events.slice().reverse().forEach(e => { %>
+            <li><strong><%= h.statusLabel(e.status) %></strong><div class="when"><%= new Date(e.created_at + 'Z').toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) %></div><% if (e.message) { %><div class="small prose"><%= e.message %></div><% } %></li>
+          <% }) %>
+        </ul>
+      </div></div>
+    </div>
+  </div>
+  <% if (!user) { %>
+    <div class="alert alert-info mt-2">Create an account with <strong><%= order.email %></strong> to keep all your orders together. <a href="/register?next=/orders/<%= order.ref %>">Create account</a></div>
+  <% } %>
+</div>
+<%- include('partials/footer') %>

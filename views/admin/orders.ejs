@@ -1,0 +1,24 @@
+<%- include('_header') %>
+<div class="admin-top"><h1>Orders</h1><div class="spacer"></div><a class="btn btn-ghost" href="/admin/orders.csv">Export CSV</a></div>
+<form class="toolbar card card-body" method="get" action="/admin/orders" style="padding:12px">
+  <input type="search" name="q" value="<%= q %>" placeholder="Order no., customer, email, phone…" style="flex:1;min-width:200px">
+  <select name="status" style="width:auto"><option value="">All statuses</option><% h.ORDER_STATUSES.forEach(s => { %><option value="<%= s.key %>" <%= status === s.key ? 'selected' : '' %>><%= s.label %></option><% }) %></select>
+  <button class="btn" type="submit">Filter</button>
+</form>
+<div class="card table-wrap"><table class="table">
+  <thead><tr><th>Order</th><th>Customer</th><th>Destination</th><th>Items</th><th>Status</th><th class="right">Value</th></tr></thead>
+  <tbody>
+  <% if (!orders.length) { %><tr><td colspan="6" class="center muted" style="padding:32px">No orders found.</td></tr><% } %>
+  <% orders.forEach(o => { %>
+    <tr>
+      <td><a href="/admin/orders/<%= o.ref %>"><strong><%= o.ref %></strong></a><div class="small muted"><%= new Date(o.created_at + 'Z').toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) %></div></td>
+      <td><%= o.customer_name %><div class="small muted"><%= o.phone %><%= o.company ? ' · ' + o.company : '' %></div></td>
+      <td class="small"><%= [o.city, o.country].filter(Boolean).join(', ') %><div class="muted"><%= h.shippingLabel(o.shipping_method) %></div></td>
+      <td><%= o.item_count %> <% (o.modes || '').split(',').filter(Boolean).forEach(m => { %><span class="tag tag-<%= m %>"><%= m === 'source' ? 'China' : 'Stock' %></span> <% }) %></td>
+      <td><span class="status status-<%= o.status %>"><%= h.statusLabel(o.status) %></span></td>
+      <td class="right nowrap"><%= o.quoted_total !== null ? fmt(o.quoted_total) : o.estimate_total ? '~' + fmt(o.estimate_total) : '—' %></td>
+    </tr>
+  <% }) %>
+  </tbody>
+</table></div>
+<%- include('_footer') %>

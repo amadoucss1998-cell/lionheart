@@ -1,0 +1,42 @@
+<%- include('head') %>
+<body>
+<div class="topbar">
+  <div class="container">
+    <div class="hubs"><span>China sourcing office</span><span>Dubai warehouse</span><span>Monrovia, Liberia</span></div>
+    <div class="spacer"></div>
+    <a href="tel:<%= settings.phone %>"><%= settings.phone %></a>
+    <a href="mailto:<%= settings.email %>"><%= settings.email %></a>
+  </div>
+</div>
+<header class="header">
+  <div class="container">
+    <a class="brand" href="/" aria-label="Lionheart home"><img src="/static/img/logo.png" alt="Lionheart Group of Companies" width="68" height="50"></a>
+    <form class="search" action="/products" method="get" role="search">
+      <label class="sr-only" for="q">Search products</label>
+      <input id="q" type="search" name="q" value="<%= locals.filters ? filters.q : '' %>" placeholder="Search tiles, excavators, solar panels, doors…">
+      <button type="submit"><%- icon('search', 18) %><span class="label">Search</span></button>
+    </form>
+    <nav class="header-actions">
+      <a href="/request"><%- icon('clipboard') %><span class="label">Request a product</span></a>
+      <% if (user) { %>
+        <a href="<%= user.role === 'customer' ? '/account' : '/admin' %>"><%- icon('user') %><span class="label"><%= user.role === 'customer' ? 'My orders' : 'Admin' %></span></a>
+      <% } else { %>
+        <a href="/login"><%- icon('user') %><span class="label">Sign in</span></a>
+      <% } %>
+      <a class="cart-link" href="/cart"><%- icon('cart') %><span class="label">Cart</span><% if (cartCount) { %><span class="badge-count"><%= cartCount %></span><% } %></a>
+    </nav>
+  </div>
+</header>
+<nav class="catnav" aria-label="Categories">
+  <div class="container">
+    <a href="/products" class="<%= path === '/products' && !(locals.filters && filters.category) ? 'active' : '' %>">All products</a>
+    <% categoriesNav.forEach(c => { %>
+      <a href="/products?category=<%= c.slug %>" class="<%= locals.filters && filters.category === c.slug ? 'active' : '' %>"><%- icon(c.icon, 16) %><%= c.name %></a>
+    <% }) %>
+    <a href="/how-it-works">How it works</a>
+  </div>
+</nav>
+<main>
+<% if (flash) { %>
+  <div class="container"><div class="alert alert-<%= flash.type %>"><%= flash.message %></div></div>
+<% } %>

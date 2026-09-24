@@ -1,0 +1,11 @@
+<%- include('partials/header') %>
+<div class="container page">
+  <div class="card auth-box center"><div class="card-body">
+    <div style="color:var(--green)"><%- icon('check', 48, '') %></div>
+    <h1>Request received</h1>
+    <p>Your reference number is <strong><%= ref %></strong>.</p>
+    <p class="muted">Our sourcing team will contact you by email or WhatsApp with options and prices.</p>
+    <div class="row" style="justify-content:center"><a class="btn" href="/products">Continue browsing</a><% if (user) { %><a class="btn btn-outline" href="/account">My account</a><% } %></div>
+  </div></div>
+</div>
+<%- include('partials/footer') %>

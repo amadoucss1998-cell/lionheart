@@ -1,0 +1,42 @@
+<%- include('partials/header') %>
+<div class="container page">
+  <div class="breadcrumbs"><a href="/cart">Cart</a> / Checkout</div>
+  <div class="page-head"><h1>Place your order</h1></div>
+  <%- include('partials/errors') %>
+  <div class="cart-layout">
+    <form method="post" action="/checkout" class="card"><div class="card-body">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <% if (!user) { %><div class="alert alert-info mt-0">Already a customer? <a href="/login?next=/checkout"><strong>Sign in</strong></a> to track all your orders in one place. You can also continue as a guest.</div><% } %>
+      <h2>Your details</h2>
+      <div class="grid-2">
+        <div class="field"><label for="customer_name">Full name *</label><input id="customer_name" name="customer_name" type="text" required value="<%= form.customer_name || '' %>" autocomplete="name"></div>
+        <div class="field"><label for="company">Company (optional)</label><input id="company" name="company" type="text" value="<%= form.company || '' %>" autocomplete="organization"></div>
+        <div class="field"><label for="email">Email *</label><input id="email" name="email" type="email" required value="<%= form.email || '' %>" autocomplete="email"></div>
+        <div class="field"><label for="phone">Phone / WhatsApp *</label><input id="phone" name="phone" type="tel" required value="<%= form.phone || '' %>" autocomplete="tel" placeholder="+231…"></div>
+      </div>
+      <h2 class="mt-2">Delivery</h2>
+      <div class="grid-2">
+        <div class="field"><label for="country">Destination country *</label><input id="country" name="country" type="text" required value="<%= form.country || '' %>" autocomplete="country-name"></div>
+        <div class="field"><label for="city">City / port</label><input id="city" name="city" type="text" value="<%= form.city || '' %>" placeholder="e.g. Monrovia, Freeport"></div>
+      </div>
+      <div class="field"><label for="delivery_address">Delivery address</label><textarea id="delivery_address" name="delivery_address" rows="2"><%= form.delivery_address || '' %></textarea></div>
+      <div class="field"><label for="shipping_method">Preferred shipping</label>
+        <select id="shipping_method" name="shipping_method">
+          <% shippingMethods.forEach(m => { %><option value="<%= m.key %>" <%= (form.shipping_method || 'advise') === m.key ? 'selected' : '' %>><%= m.label %></option><% }) %>
+        </select>
+      </div>
+      <div class="field"><label for="notes">Notes for our team</label><textarea id="notes" name="notes" placeholder="Deadlines, special requirements, branding, inspection needs…"><%= form.notes || '' %></textarea></div>
+      <button class="btn btn-gold btn-lg btn-block" type="submit">Submit order for quotation</button>
+      <p class="small muted mt-1 mb-0">No payment is taken now. We will send you a quotation with the final price, shipping and delivery time.</p>
+    </div></form>
+    <aside class="card summary"><div class="card-body">
+      <h2>Your items</h2>
+      <% lines.forEach(l => { %>
+        <div class="line small"><span><%= l.qty %> × <%= l.product.name %><br><span class="tag tag-<%= l.mode %>"><%= h.MODES[l.mode].short %></span></span><span class="nowrap"><%= l.lineTotal !== null ? fmt(l.lineTotal) : 'Quote' %></span></div>
+      <% }) %>
+      <div class="line total"><span>Estimate</span><span><%= fmt(estimate) %><%= hasUnpriced ? ' +' : '' %></span></div>
+      <p class="small muted mb-0">Shipping, duties and clearing are quoted separately.</p>
+    </div></aside>
+  </div>
+</div>
+<%- include('partials/footer') %>

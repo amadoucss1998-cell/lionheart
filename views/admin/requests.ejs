@@ -1,0 +1,18 @@
+<%- include('_header') %>
+<div class="admin-top"><h1>Sourcing requests</h1><span class="muted small">Custom product requests from customers</span></div>
+<div class="card table-wrap"><table class="table">
+  <thead><tr><th>Ref</th><th>Customer</th><th>Request</th><th>Qty</th><th>Status</th></tr></thead>
+  <tbody>
+  <% if (!requests.length) { %><tr><td colspan="5" class="center muted" style="padding:32px">No requests yet.</td></tr><% } %>
+  <% requests.forEach(r => { %>
+    <tr>
+      <td><a href="/admin/requests/<%= r.ref %>"><strong><%= r.ref %></strong></a><div class="small muted"><%= new Date(r.created_at + 'Z').toLocaleDateString('en-GB', { dateStyle: 'medium' }) %></div></td>
+      <td><%= r.name %><div class="small muted"><%= r.phone || r.email %><%= r.country ? ' · ' + r.country : '' %></div></td>
+      <td><%= r.description.slice(0, 110) %><%= r.description.length > 110 ? '…' : '' %><% if (r.category_name) { %><div class="small muted"><%= r.category_name %></div><% } %></td>
+      <td class="small"><%= r.quantity || '—' %></td>
+      <td><span class="status status-<%= r.status %>"><%= (h.SOURCING_STATUSES.find(s => s.key === r.status) || {}).label %></span></td>
+    </tr>
+  <% }) %>
+  </tbody>
+</table></div>
+<%- include('_footer') %>

@@ -1,0 +1,38 @@
+<%- include('partials/header') %>
+<div class="container page">
+  <div class="cart-layout">
+    <div class="card"><div class="card-body">
+      <h1>Request a product</h1>
+      <p class="muted">Can't find what you need? Tell us about it. Our sourcing team in China works with thousands of factories and will send you prices and options.</p>
+      <%- include('partials/errors') %>
+      <form method="post" action="/request" enctype="multipart/form-data">
+        <input type="hidden" name="_csrf" value="<%= csrf %>">
+        <div class="field"><label for="description">What do you need? *</label><textarea id="description" name="description" required rows="5" placeholder="Product name, model, size, colour, specifications, brand, where you will use it…"><%= form.description || '' %></textarea></div>
+        <div class="grid-3">
+          <div class="field"><label for="category_id">Category</label>
+            <select id="category_id" name="category_id"><option value="">Not sure</option><% categoriesNav.forEach(c => { %><option value="<%= c.id %>" <%= form.category_id == c.id ? 'selected' : '' %>><%= c.name %></option><% }) %></select></div>
+          <div class="field"><label for="quantity">Quantity</label><input id="quantity" name="quantity" type="text" value="<%= form.quantity || '' %>" placeholder="e.g. 2 containers, 500 sqm"></div>
+          <div class="field"><label for="target_price">Target price / budget</label><input id="target_price" name="target_price" type="text" value="<%= form.target_price || '' %>" placeholder="optional"></div>
+        </div>
+        <div class="field"><label for="image">Photo or reference picture</label><input id="image" name="image" type="file" accept="image/*" data-preview="req-preview"><div class="previews" id="req-preview"></div></div>
+        <h2 class="mt-2">Your contact details</h2>
+        <div class="grid-2">
+          <div class="field"><label for="name">Name *</label><input id="name" name="name" type="text" required value="<%= form.name || '' %>"></div>
+          <div class="field"><label for="email">Email *</label><input id="email" name="email" type="email" required value="<%= form.email || '' %>"></div>
+          <div class="field"><label for="phone">Phone / WhatsApp</label><input id="phone" name="phone" type="tel" value="<%= form.phone || '' %>"></div>
+          <div class="field"><label for="country">Country</label><input id="country" name="country" type="text" value="<%= form.country || '' %>"></div>
+        </div>
+        <button class="btn btn-gold btn-lg" type="submit">Send request</button>
+      </form>
+    </div></div>
+    <aside class="card summary"><div class="card-body">
+      <h2>What happens next?</h2>
+      <ul class="timeline">
+        <li><strong>We search our supplier network</strong><div class="small muted">Factories in Guangzhou, Foshan, Yiwu, Shenzhen and beyond.</div></li>
+        <li><strong>You get options &amp; prices</strong><div class="small muted">Usually within 1–3 working days.</div></li>
+        <li><strong>We buy, inspect &amp; ship</strong><div class="small muted">Through our China and Dubai warehouses to your door.</div></li>
+      </ul>
+    </div></aside>
+  </div>
+</div>
+<%- include('partials/footer') %>

@@ -1,0 +1,29 @@
+<%- include('../partials/head') %>
+<body>
+<% const nav = [
+  ['/admin', 'Dashboard', 'grid'],
+  ['/admin/orders', 'Orders', 'cart'],
+  ['/admin/requests', 'Sourcing requests', 'clipboard'],
+  ['/admin/products', 'Products', 'box'],
+  ['/admin/products/new', 'Add product', 'plus'],
+  ['/admin/products-import', 'Bulk import', 'warehouse'],
+  ['/admin/categories', 'Categories', 'grid'],
+  ['/admin/suppliers', 'Suppliers', 'factory'],
+  ['/admin/customers', 'Customers & team', 'user'],
+];
+const isActive = (href) => href === '/admin' ? path === '/admin' : path === href || (path.startsWith(href + '/') && path !== '/admin/products/new'); %>
+<div class="admin-mobile-bar"><button type="button" data-toggle-side aria-label="Menu"><%- icon('menu', 24) %></button><strong>Lionheart Admin</strong></div>
+<div class="admin-shell">
+  <aside class="admin-side">
+    <a class="logo" href="/admin"><img src="/static/img/logo-white.png" alt="Lionheart"></a>
+    <% nav.forEach(([href, label, ic]) => { %>
+      <a href="<%= href %>" class="<%= isActive(href) ? 'active' : '' %>"><%- icon(ic, 18) %> <%= label %></a>
+    <% }) %>
+    <% if (user.role === 'admin') { %><a href="/admin/settings" class="<%= path === '/admin/settings' ? 'active' : '' %>"><%- icon('cog', 18) %> Settings</a><% } %>
+    <div class="sep"></div>
+    <a href="/" target="_blank"><%- icon('globe', 18) %> View website</a>
+    <a href="/account/profile"><%- icon('user', 18) %> <%= user.name %></a>
+    <form method="post" action="/logout"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="linklike" style="color:#c9d4e2;padding:9px 12px" type="submit">Sign out</button></form>
+  </aside>
+  <main class="admin-main">
+    <% if (flash) { %><div class="alert alert-<%= flash.type %> mt-0"><%= flash.message %></div><% } %>

@@ -1,0 +1,18 @@
+<%- include('_header') %>
+<div class="admin-top"><h1>Settings</h1></div>
+<% const labels = {
+  company_name: ['Company name', 'text'], tagline: ['Tagline', 'text'], currency: ['Currency code', 'text', 'ISO code used for all prices, e.g. USD, AED, CNY'],
+  email: ['Contact email', 'text'], phone: ['Contact phone', 'text'], whatsapp: ['WhatsApp number', 'text', 'International format, digits only, e.g. 231888979704. Leave empty to hide WhatsApp buttons.'],
+  address_liberia: ['Liberia address', 'text'], address_china: ['China office / warehouse', 'text'], address_dubai: ['Dubai office / warehouse', 'text'],
+  website: ['Website', 'text'], payment_instructions: ['Payment instructions', 'textarea', 'Shown to customers after they accept a quotation.'],
+}; %>
+<form class="card" method="post" action="/admin/settings" style="max-width:820px"><div class="card-body">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <% keys.forEach(k => { const [label, type, hint] = labels[k] || [k, 'text']; %>
+    <div class="field"><label for="s-<%= k %>"><%= label %></label>
+      <% if (type === 'textarea') { %><textarea id="s-<%= k %>" name="<%= k %>" rows="4"><%= values[k] || '' %></textarea><% } else { %><input id="s-<%= k %>" name="<%= k %>" type="text" value="<%= values[k] || '' %>"><% } %>
+      <% if (hint) { %><div class="hint"><%= hint %></div><% } %></div>
+  <% }) %>
+  <button class="btn btn-gold" type="submit">Save settings</button>
+</div></form>
+<%- include('_footer') %>

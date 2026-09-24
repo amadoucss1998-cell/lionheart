@@ -1,0 +1,42 @@
+<%- include('_header') %>
+<div class="admin-top"><h1>Dashboard</h1><div class="spacer"></div><a class="btn btn-gold" href="/admin/products/new"><%- icon('plus', 18) %> Add product</a></div>
+<div class="stats">
+  <a class="card stat" href="/admin/orders?status=received"><div class="n"><%= stats.ordersNew %></div><div class="l">New orders to quote</div></a>
+  <a class="card stat" href="/admin/orders"><div class="n"><%= stats.ordersOpen %></div><div class="l">Open orders</div></a>
+  <a class="card stat" href="/admin/requests"><div class="n"><%= stats.requestsNew %></div><div class="l">New sourcing requests</div></a>
+  <a class="card stat" href="/admin/products"><div class="n"><%= stats.products %></div><div class="l">Active products</div></a>
+  <a class="card stat" href="/admin/customers"><div class="n"><%= stats.customers %></div><div class="l">Registered customers</div></a>
+  <a class="card stat" href="/admin/suppliers"><div class="n"><%= stats.suppliers %></div><div class="l">Suppliers</div></a>
+</div>
+<div class="admin-grid">
+  <div class="card"><div class="card-body">
+    <div class="row"><h2 class="mb-0">Latest orders</h2><div class="spacer"></div><a href="/admin/orders">All orders →</a></div>
+    <% if (!recentOrders.length) { %><p class="muted mt-1">No orders yet.</p><% } else { %>
+    <div class="table-wrap mt-1"><table class="table">
+      <thead><tr><th>Order</th><th>Customer</th><th>Status</th><th class="right">Value</th></tr></thead>
+      <tbody><% recentOrders.forEach(o => { %>
+        <tr><td><a href="/admin/orders/<%= o.ref %>"><strong><%= o.ref %></strong></a><div class="small muted"><%= new Date(o.created_at + 'Z').toLocaleString('en-GB', { dateStyle: 'short', timeStyle: 'short' }) %></div></td>
+        <td><%= o.customer_name %><div class="small muted"><%= o.country %></div></td>
+        <td><span class="status status-<%= o.status %>"><%= h.statusLabel(o.status) %></span></td>
+        <td class="right nowrap"><%= o.quoted_total !== null ? fmt(o.quoted_total) : o.estimate_total ? '~' + fmt(o.estimate_total) : '—' %></td></tr>
+      <% }) %></tbody>
+    </table></div><% } %>
+  </div></div>
+  <div class="stack">
+    <div class="card"><div class="card-body">
+      <h2>Orders by status</h2>
+      <% if (!byStatus.length) { %><p class="muted mb-0">—</p><% } %>
+      <% h.ORDER_STATUSES.forEach(s => { const r = byStatus.find(b => b.status === s.key); if (r) { %>
+        <div class="row small" style="justify-content:space-between;padding:4px 0"><a href="/admin/orders?status=<%= s.key %>"><span class="status status-<%= s.key %>"><%= s.label %></span></a><strong><%= r.n %></strong></div>
+      <% } }) %>
+    </div></div>
+    <div class="card"><div class="card-body">
+      <div class="row"><h2 class="mb-0">Sourcing requests</h2><div class="spacer"></div><a href="/admin/requests">All →</a></div>
+      <% if (!recentRequests.length) { %><p class="muted mt-1 mb-0">No requests yet.</p><% } %>
+      <% recentRequests.forEach(r => { %>
+        <div class="mt-1"><a href="/admin/requests/<%= r.ref %>"><strong><%= r.name %></strong></a> <span class="status status-<%= r.status %>"><%= r.status %></span><div class="small muted"><%= r.description.slice(0, 90) %><%= r.description.length > 90 ? '…' : '' %></div></div>
+      <% }) %>
+    </div></div>
+  </div>
+</div>
+<%- include('_footer') %>

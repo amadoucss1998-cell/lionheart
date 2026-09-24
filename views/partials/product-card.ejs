@@ -1,0 +1,21 @@
+<article class="pcard">
+  <a class="thumb" href="/products/<%= p.slug %>">
+    <% if (p.image) { %><img src="/uploads/<%= p.image %>" alt="<%= p.name %>" loading="lazy"><% } else { %><div class="placeholder"><%- icon(p.category_icon || 'box', 56) %></div><% } %>
+    <div class="tags">
+      <% if (p.stock_available) { %><span class="tag tag-stock">In stock</span><% } %>
+      <% if (p.sourcing_available) { %><span class="tag tag-source">From China</span><% } %>
+    </div>
+  </a>
+  <div class="pbody">
+    <% if (p.category_name) { %><div class="pcat"><%= p.category_name %></div><% } %>
+    <h3><a href="/products/<%= p.slug %>"><%= p.name %></a></h3>
+    <div class="prices">
+      <% if (p.sourcing_available) { %>
+        <div><span class="muted">China price</span><% if (p.china_price !== null) { %><span class="price"><%= fmt(p.china_price) %><small class="muted"> /<%= p.unit %></small></span><% } else { %><span class="price-quote">Get a quote</span><% } %></div>
+      <% } %>
+      <% if (p.stock_available) { %>
+        <div><span class="muted">Our stock</span><% if (p.stock_price !== null) { %><span class="price"><%= fmt(p.stock_price) %><small class="muted"> /<%= p.unit %></small></span><% } else { %><span class="price-quote">Get a quote</span><% } %></div>
+      <% } %>
+    </div>
+  </div>
+</article>

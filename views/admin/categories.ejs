@@ -1,0 +1,41 @@
+<%- include('_header') %>
+<div class="admin-top"><h1>Categories</h1></div>
+<div class="admin-grid">
+  <div class="card table-wrap"><table class="table">
+    <thead><tr><th>Order</th><th>Category</th><th>Products</th><th></th></tr></thead>
+    <tbody>
+    <% categories.forEach(c => { %>
+      <tr>
+        <td colspan="4" style="padding:0">
+          <form method="post" action="/admin/categories" class="row" style="padding:10px 12px;gap:8px">
+            <input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="id" value="<%= c.id %>">
+            <input type="number" name="sort_order" value="<%= c.sort_order %>" style="width:70px" aria-label="Sort order">
+            <span style="color:var(--navy)"><%- icon(c.icon, 22) %></span>
+            <input type="text" name="name" value="<%= c.name %>" style="flex:1;min-width:160px" aria-label="Name">
+            <select name="icon" style="width:auto" aria-label="Icon"><% icons.forEach(i => { %><option <%= c.icon === i ? 'selected' : '' %>><%= i %></option><% }) %></select>
+            <input type="text" name="description" value="<%= c.description || '' %>" placeholder="Description" style="flex:2;min-width:180px" aria-label="Description">
+            <span class="small muted nowrap"><%= c.product_count %> products</span>
+            <button class="btn btn-outline btn-sm" type="submit">Save</button>
+            <button class="btn btn-danger btn-sm" type="submit" form="del-cat-<%= c.id %>">Delete</button>
+          </form>
+          <form id="del-cat-<%= c.id %>" method="post" action="/admin/categories/<%= c.id %>/delete" data-confirm="Delete category '<%= c.name %>'? Its products will become uncategorised."><input type="hidden" name="_csrf" value="<%= csrf %>"></form>
+        </td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table></div>
+  <div class="card"><div class="card-body">
+    <h2>Add category</h2>
+    <form method="post" action="/admin/categories">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <div class="field"><label for="cname">Name</label><input id="cname" name="name" type="text" required placeholder="e.g. Kitchen Cabinets"></div>
+      <div class="field"><label for="cdesc">Description</label><input id="cdesc" name="description" type="text"></div>
+      <div class="grid-2">
+        <div class="field"><label for="cicon">Icon</label><select id="cicon" name="icon"><% icons.forEach(i => { %><option><%= i %></option><% }) %></select></div>
+        <div class="field"><label for="corder">Sort order</label><input id="corder" name="sort_order" type="number" value="<%= categories.length %>"></div>
+      </div>
+      <button class="btn btn-gold" type="submit">Add category</button>
+    </form>
+  </div></div>
+</div>
+<%- include('_footer') %>

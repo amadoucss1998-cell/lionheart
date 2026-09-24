@@ -1,0 +1,25 @@
+<%- include('../partials/header') %>
+<div class="container page">
+  <div class="card auth-box" style="max-width:640px"><div class="card-body">
+    <div class="breadcrumbs"><a href="<%= user.role === 'customer' ? '/account' : '/admin' %>">← Back</a></div>
+    <h1>My profile</h1>
+    <%- include('../partials/errors') %>
+    <form method="post" action="/account/profile">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <div class="field"><label>Email</label><input type="email" value="<%= user.email %>" disabled></div>
+      <div class="grid-2">
+        <div class="field"><label for="name">Full name</label><input id="name" name="name" type="text" required value="<%= form.name || '' %>"></div>
+        <div class="field"><label for="phone">Phone / WhatsApp</label><input id="phone" name="phone" type="tel" value="<%= form.phone || '' %>"></div>
+        <div class="field"><label for="company">Company</label><input id="company" name="company" type="text" value="<%= form.company || '' %>"></div>
+        <div class="field"><label for="country">Country</label><input id="country" name="country" type="text" value="<%= form.country || '' %>"></div>
+      </div>
+      <h2 class="mt-2">Change password</h2>
+      <div class="grid-2">
+        <div class="field"><label for="current_password">Current password</label><input id="current_password" name="current_password" type="password" autocomplete="current-password"></div>
+        <div class="field"><label for="new_password">New password</label><input id="new_password" name="new_password" type="password" minlength="8" autocomplete="new-password"><div class="hint">Leave blank to keep your current password.</div></div>
+      </div>
+      <button class="btn" type="submit">Save</button>
+    </form>
+  </div></div>
+</div>
+<%- include('../partials/footer') %>

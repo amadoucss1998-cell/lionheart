@@ -1,0 +1,39 @@
+<%- include('_header') %>
+<div class="admin-top"><h1>Customers &amp; team</h1></div>
+<div class="admin-grid">
+  <div class="card table-wrap"><table class="table">
+    <thead><tr><th>Name</th><th>Contact</th><th>Country</th><th>Orders</th><th>Role</th></tr></thead>
+    <tbody>
+    <% users.forEach(u => { %>
+      <tr>
+        <td><strong><%= u.name %></strong><% if (u.company) { %><div class="small muted"><%= u.company %></div><% } %></td>
+        <td class="small"><a href="mailto:<%= u.email %>"><%= u.email %></a><% if (u.phone) { %><br><%= u.phone %><% } %></td>
+        <td class="small"><%= u.country || '—' %></td>
+        <td><%= u.order_count %></td>
+        <td><% if (user.role === 'admin' && u.id !== user.id) { %>
+          <form method="post" action="/admin/users/<%= u.id %>/role" class="row" style="gap:6px;flex-wrap:nowrap">
+            <input type="hidden" name="_csrf" value="<%= csrf %>">
+            <select name="role" style="width:auto;padding:5px 8px"><% ['customer', 'staff', 'admin'].forEach(r => { %><option <%= u.role === r ? 'selected' : '' %>><%= r %></option><% }) %></select>
+            <button class="btn btn-ghost btn-sm" type="submit">Set</button>
+          </form>
+        <% } else { %><span class="tag <%= u.role === 'customer' ? 'tag-muted' : 'tag-featured' %>"><%= u.role %></span><% } %></td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table></div>
+  <% if (user.role === 'admin') { %>
+  <div class="card"><div class="card-body">
+    <h2>Add team member</h2>
+    <p class="small muted">Staff can manage products, orders and requests. Admins can also change settings and roles.</p>
+    <form method="post" action="/admin/users">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <div class="field"><label for="uname">Name</label><input id="uname" name="name" type="text" required></div>
+      <div class="field"><label for="uemail">Email</label><input id="uemail" name="email" type="email" required></div>
+      <div class="field"><label for="upass">Temporary password</label><input id="upass" name="password" type="text" minlength="8" required></div>
+      <div class="field"><label for="urole">Role</label><select id="urole" name="role"><option value="staff">Staff</option><option value="admin">Admin</option></select></div>
+      <button class="btn btn-gold" type="submit">Add member</button>
+    </form>
+  </div></div>
+  <% } %>
+</div>
+<%- include('_footer') %>

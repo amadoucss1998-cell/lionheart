@@ -1,0 +1,104 @@
+<%- include('_header') %>
+<% const isNew = !product.id; const v = (k) => product[k] === null || product[k] === undefined ? '' : product[k]; %>
+<div class="admin-top">
+  <div><div class="breadcrumbs"><a href="/admin/products">Products</a> / <%= isNew ? 'New' : 'Edit' %></div><h1><%= isNew ? 'Add product' : product.name %></h1></div>
+  <div class="spacer"></div>
+  <% if (!isNew) { %>
+    <a class="btn btn-ghost" href="/products/<%= product.slug %>" target="_blank">View on site</a>
+    <form class="inline-form" method="post" action="/admin/products/<%= product.id %>/duplicate"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-ghost" type="submit">Duplicate</button></form>
+  <% } %>
+</div>
+<%- include('../partials/errors') %>
+<form method="post" action="<%= isNew ? '/admin/products/new' : '/admin/products/' + product.id %>" enctype="multipart/form-data">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <div class="admin-grid">
+    <div>
+      <section class="card form-section">
+        <h2><%- icon('box', 18) %> Basic information</h2>
+        <div class="card-body">
+          <div class="field"><label for="name">Product name *</label><input id="name" name="name" type="text" required value="<%= v('name') %>" placeholder="e.g. Porcelain Floor Tile 60x60 Polished"></div>
+          <div class="grid-2">
+            <div class="field"><label for="category_id">Category</label>
+              <select id="category_id" name="category_id"><option value="">— None —</option><% categories.forEach(c => { %><option value="<%= c.id %>" <%= product.category_id == c.id ? 'selected' : '' %>><%= c.name %></option><% }) %></select>
+              <div class="hint"><a href="/admin/categories">Manage categories</a></div></div>
+            <div class="field"><label for="sku">SKU / item code</label><input id="sku" name="sku" type="text" value="<%= v('sku') %>"><div class="hint">Used to update products via bulk import.</div></div>
+          </div>
+          <div class="field"><label for="short_description">Short description</label><input id="short_description" name="short_description" type="text" maxlength="300" value="<%= v('short_description') %>" placeholder="One line shown under the product name"></div>
+          <div class="field"><label for="description">Full description</label><textarea id="description" name="description" rows="6"><%= v('description') %></textarea></div>
+          <div class="field"><label for="specs">Specifications</label><textarea id="specs" name="specs" rows="6" placeholder="Size: 600x600mm&#10;Thickness: 9.5mm&#10;Finish: Polished"><%= v('specs') %></textarea><div class="hint">One per line, as <code>Name: Value</code>. Shown as a table on the product page.</div></div>
+        </div>
+      </section>
+
+      <section class="card form-section">
+        <h2><%- icon('factory', 18) %> Option 1: Source from China</h2>
+        <div class="card-body">
+          <label class="check mb-2"><input type="checkbox" name="sourcing_available" value="1" <%= product.sourcing_available ? 'checked' : '' %>> Customers can order this directly from China through us</label>
+          <div class="grid-3">
+            <div class="field"><label for="china_price">Price per unit (<%= settings.currency %>)</label><input id="china_price" name="china_price" type="number" step="0.01" min="0" value="<%= v('china_price') %>"><div class="hint">Leave empty for "price on request".</div></div>
+            <div class="field"><label for="moq">Minimum order (MOQ)</label><input id="moq" name="moq" type="number" min="1" step="1" value="<%= v('moq') || 1 %>"></div>
+            <div class="field"><label for="china_lead_days">Lead time (days)</label><input id="china_lead_days" name="china_lead_days" type="number" min="0" step="1" value="<%= v('china_lead_days') %>"><div class="hint">Production and purchase, before shipping.</div></div>
+          </div>
+          <div class="field"><label for="supplier_id">Supplier <span class="muted">(internal, never shown to customers)</span></label>
+            <select id="supplier_id" name="supplier_id"><option value="">— Not set —</option><% suppliers.forEach(s => { %><option value="<%= s.id %>" <%= product.supplier_id == s.id ? 'selected' : '' %>><%= s.name %><%= s.city ? ` (${s.city})` : '' %></option><% }) %></select>
+            <div class="hint"><a href="/admin/suppliers">Manage suppliers</a></div></div>
+        </div>
+      </section>
+
+      <section class="card form-section">
+        <h2><%- icon('warehouse', 18) %> Option 2: Buy from Lionheart stock</h2>
+        <div class="card-body">
+          <label class="check mb-2"><input type="checkbox" name="stock_available" value="1" <%= product.stock_available ? 'checked' : '' %>> We have this in our warehouse. Customers can buy it directly from us.</label>
+          <div class="grid-3">
+            <div class="field"><label for="stock_price">Our price per unit (<%= settings.currency %>)</label><input id="stock_price" name="stock_price" type="number" step="0.01" min="0" value="<%= v('stock_price') %>"></div>
+            <div class="field"><label for="stock_qty">Quantity in stock</label><input id="stock_qty" name="stock_qty" type="number" step="1" value="<%= v('stock_qty') %>"></div>
+            <div class="field"><label for="stock_location">Location</label><input id="stock_location" name="stock_location" type="text" list="locations" value="<%= v('stock_location') %>">
+              <datalist id="locations"><option value="Dubai warehouse"><option value="Guangzhou warehouse"><option value="Monrovia warehouse"></datalist></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="stack">
+      <section class="card form-section">
+        <h2>Publishing</h2>
+        <div class="card-body">
+          <label class="check"><input type="checkbox" name="active" value="1" <%= product.active ? 'checked' : '' %>> Visible on the website</label>
+          <label class="check mt-1"><input type="checkbox" name="featured" value="1" <%= product.featured ? 'checked' : '' %>> Featured on the home page</label>
+          <div class="field mt-2"><label for="unit">Selling unit</label><input id="unit" name="unit" type="text" list="units" value="<%= v('unit') || 'piece' %>">
+            <datalist id="units"><% ['piece', 'set', 'unit', 'sqm', 'sheet', 'ton', 'meter', 'carton', 'pallet', 'container', 'kg', 'box', 'roll', 'bag'].forEach(u => { %><option value="<%= u %>"><% }) %></datalist></div>
+          <button class="btn btn-gold btn-block" type="submit">Save product</button>
+          <% if (isNew) { %><button class="btn btn-ghost btn-block mt-1" type="submit" name="save_and_new" value="1">Save &amp; add another</button><% } %>
+        </div>
+      </section>
+
+      <section class="card form-section">
+        <h2><%- icon('plus', 18) %> Photos</h2>
+        <div class="card-body">
+          <% if (product.images && product.images.length) { %>
+            <div class="img-manage mb-2">
+              <% product.images.forEach((img, i) => { %>
+                <figure><img src="/uploads/<%= img.filename %>" alt="">
+                  <figcaption>
+                    <label class="check"><input type="radio" name="main_image" value="<%= img.id %>" <%= i === 0 ? 'checked' : '' %>> Main photo</label>
+                    <label class="check" style="color:var(--red)"><input type="checkbox" name="remove_image" value="<%= img.id %>"> Remove</label>
+                  </figcaption></figure>
+              <% }) %>
+            </div>
+          <% } %>
+          <div class="dropzone">
+            <label for="images" style="cursor:pointer">Choose photos to upload</label>
+            <input id="images" name="images" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple data-preview="img-preview">
+            <div class="hint">JPG, PNG or WebP, up to 8 MB each, 12 at a time.</div>
+          </div>
+          <div class="previews" id="img-preview"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+</form>
+<% if (!isNew) { %>
+<form method="post" action="/admin/products/<%= product.id %>/delete" data-confirm="Delete this product permanently? Existing orders are not affected." class="mt-2">
+  <input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-danger btn-sm" type="submit">Delete product</button>
+</form>
+<% } %>
+<%- include('_footer') %>

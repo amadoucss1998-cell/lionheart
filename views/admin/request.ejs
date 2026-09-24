@@ -1,0 +1,43 @@
+<%- include('_header') %>
+<% const wa = (request.phone || '').replace(/\D/g, ''); %>
+<div class="admin-top">
+  <div><div class="breadcrumbs"><a href="/admin/requests">Sourcing requests</a> / <%= request.ref %></div><h1>Request <%= request.ref %></h1></div>
+  <div class="spacer"></div>
+  <% if (wa) { %><a class="btn btn-whatsapp" target="_blank" rel="noopener" href="https://wa.me/<%= wa %>?text=<%= encodeURIComponent(`Hello ${request.name}, this is Lionheart regarding your sourcing request ${request.ref}.`) %>"><%- icon('chat', 18) %> WhatsApp</a><% } %>
+  <a class="btn btn-ghost" href="mailto:<%= request.email %>?subject=<%= encodeURIComponent('Your Lionheart sourcing request ' + request.ref) %>">Email</a>
+  <a class="btn btn-gold" href="/admin/products/new"><%- icon('plus', 18) %> Create product from this</a>
+</div>
+<div class="admin-grid">
+  <div class="card"><div class="card-body">
+    <h2>What the customer needs</h2>
+    <p class="prose"><%= request.description %></p>
+    <dl class="kv">
+      <dt>Category</dt><dd><%= request.category_name || '—' %></dd>
+      <dt>Quantity</dt><dd><%= request.quantity || '—' %></dd>
+      <dt>Target price</dt><dd><%= request.target_price || '—' %></dd>
+    </dl>
+    <% if (request.image_filename) { %><a href="/uploads/<%= request.image_filename %>" target="_blank"><img src="/uploads/<%= request.image_filename %>" alt="Reference" style="max-height:340px;border-radius:10px;margin-top:14px;border:1px solid var(--line)"></a><% } %>
+  </div></div>
+  <div class="stack">
+    <div class="card"><div class="card-body">
+      <h2>Customer</h2>
+      <dl class="kv">
+        <dt>Name</dt><dd><%= request.name %></dd>
+        <dt>Email</dt><dd><a href="mailto:<%= request.email %>"><%= request.email %></a></dd>
+        <dt>Phone</dt><dd><%= request.phone || '—' %></dd>
+        <dt>Country</dt><dd><%= request.country || '—' %></dd>
+        <dt>Received</dt><dd><%= new Date(request.created_at + 'Z').toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) %></dd>
+      </dl>
+    </div></div>
+    <form class="card" method="post" action="/admin/requests/<%= request.ref %>">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <div class="card-body">
+        <h2>Response</h2>
+        <div class="field"><label for="status">Status</label><select id="status" name="status"><% h.SOURCING_STATUSES.forEach(s => { %><option value="<%= s.key %>" <%= request.status === s.key ? 'selected' : '' %>><%= s.label %></option><% }) %></select></div>
+        <div class="field"><label for="admin_reply">Reply (visible in the customer's account)</label><textarea id="admin_reply" name="admin_reply" rows="5"><%= request.admin_reply || '' %></textarea></div>
+        <button class="btn" type="submit">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+<%- include('_footer') %>

@@ -1,0 +1,86 @@
+<%- include('partials/header') %>
+<section class="hero">
+  <div class="container">
+    <div class="hero-copy">
+      <div class="eyebrow" data-anim="eyebrow"><span></span> China &middot; Dubai &middot; West Africa</div>
+      <h1><span class="line-wrap"><span class="line">Buy from <em>China</em>.</span></span><span class="line-wrap"><span class="line">Delivered by <em>Lionheart</em>.</span></span></h1>
+      <p class="lead" data-anim="lead">We have verified suppliers for electronics, machinery, heavy equipment, vehicles, furniture, building materials, tiles, sanitary ware, Decra &amp; zinc roofing, doors and more. Order from the factory through us, or buy ready stock from our warehouse.</p>
+      <div class="cta">
+        <a class="btn btn-gold btn-lg" href="/products">Browse the catalog</a>
+        <a class="btn btn-glass btn-lg" href="/request">Can't find it? Ask us</a>
+      </div>
+      <div class="hero-stats">
+        <div><strong data-count="<%= totals.products %>"><%= totals.products %></strong><span>Products listed</span></div>
+        <div><strong data-count="<%= totals.categories %>"><%= totals.categories %></strong><span>Categories</span></div>
+        <div><strong data-count="3">3</strong><span>Trade hubs</span></div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div id="hero-globe" aria-hidden="true"></div>
+      <ul class="hero-legend">
+        <li><span class="pin"></span><div><strong>Guangzhou, China</strong><small>Sourcing, purchasing &amp; inspection</small></div></li>
+        <li><span class="pin"></span><div><strong>Dubai, UAE</strong><small>Ready stock &amp; re-export</small></div></li>
+        <li><span class="pin"></span><div><strong>Monrovia, Liberia</strong><small>Clearing, forwarding &amp; delivery</small></div></li>
+      </ul>
+    </div>
+  </div>
+  <div class="hero-fade"></div>
+</section>
+
+<div class="container">
+  <div class="two-ways">
+    <a class="card way way-source" href="/products?mode=source">
+      <div class="way-icon"><%- icon('factory', 28) %></div>
+      <div><h3>Order directly from China</h3><p>Factory prices. We source, buy, inspect and ship to your port. Best for bulk and project orders.</p></div>
+    </a>
+    <a class="card way way-stock" href="/products?mode=stock">
+      <div class="way-icon"><%- icon('warehouse', 28) %></div>
+      <div><h3>Buy from Lionheart stock</h3><p>Goods already in our warehouse. Fast delivery with no minimum order on most items.</p></div>
+    </a>
+  </div>
+
+  <section class="section">
+    <div class="section-head"><h2>Shop by category</h2><div class="spacer"></div><a href="/products">View all →</a></div>
+    <div class="cat-grid">
+      <% categoriesNav.forEach(c => { %>
+        <a class="cat-tile" href="/products?category=<%= c.slug %>">
+          <span class="ci"><%- icon(c.icon, 24) %></span>
+          <strong><%= c.name %></strong>
+          <small><%= counts[c.id] || 0 %> products</small>
+        </a>
+      <% }) %>
+    </div>
+  </section>
+
+  <% if (featured.length) { %>
+  <section class="section">
+    <div class="section-head"><h2>Featured products</h2><div class="spacer"></div><a href="/products">See more →</a></div>
+    <div class="product-grid"><% featured.forEach(p => { %><%- include('partials/product-card', { p }) %><% }) %></div>
+  </section>
+  <% } %>
+
+  <section class="section">
+    <div class="section-head"><h2>How ordering works</h2><div class="spacer"></div><a href="/how-it-works">Learn more →</a></div>
+    <div class="steps">
+      <div class="st"><div class="si"><%- icon('cart') %></div><h3>Add products to your cart</h3><p>Choose China sourcing or ready stock for each item and set your quantity.</p></div>
+      <div class="st"><div class="si"><%- icon('clipboard') %></div><h3>Get your quotation</h3><p>We confirm the final price, shipping cost and delivery time, usually within 24–48 hours.</p></div>
+      <div class="st"><div class="si"><%- icon('shield') %></div><h3>Accept &amp; pay</h3><p>Accept the quote online. We purchase from the supplier and inspect your goods.</p></div>
+      <div class="st"><div class="si"><%- icon('ship') %></div><h3>We ship &amp; deliver</h3><p>We handle freight, customs clearing and delivery. You follow every step online.</p></div>
+    </div>
+  </section>
+
+  <% if (latest.length) { %>
+  <section class="section">
+    <div class="section-head"><h2>Newly added</h2><div class="spacer"></div><a href="/products?sort=newest">See all →</a></div>
+    <div class="product-grid"><% latest.forEach(p => { %><%- include('partials/product-card', { p }) %><% }) %></div>
+  </section>
+  <% } %>
+
+  <div class="cta-band">
+    <div><h2>Need something that's not listed?</h2><p>Send us a photo or description. Our team in China will find the manufacturer and send you a price.</p></div>
+    <div class="spacer"></div>
+    <a class="btn btn-gold btn-lg" href="/request">Request a product</a>
+    <% if (settings.whatsapp) { %><a class="btn btn-whatsapp btn-lg" href="https://wa.me/<%= settings.whatsapp.replace(/\D/g, '') %>" target="_blank" rel="noopener"><%- icon('chat') %> WhatsApp us</a><% } %>
+  </div>
+</div>
+<%- include('partials/footer') %>

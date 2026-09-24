@@ -1,0 +1,3 @@
+<% if (locals.errors && errors.length) { %>
+  <div class="alert alert-error"><ul><% errors.forEach(e => { %><li><%= e %></li><% }) %></ul></div>
+<% } %>

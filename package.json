@@ -1,0 +1,36 @@
+{
+  "name": "lionheart-trade-portal",
+  "version": "1.0.0",
+  "description": "Lionheart Group product catalog, China sourcing and ordering portal",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "seed": "node src/seed.js",
+    "test": "node --test \"test/**/*.test.js\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amadoucss1998-cell/lionheart.git"
+  },
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/amadoucss1998-cell/lionheart/issues"
+  },
+  "homepage": "https://github.com/amadoucss1998-cell/lionheart#readme",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^13.0.3",
+    "compression": "^1.8.2",
+    "cookie-session": "^2.1.1",
+    "ejs": "^6.0.1",
+    "express": "^5.2.1",
+    "gsap": "3.15",
+    "multer": "^2.4.0",
+    "three": "^0.186.0"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  }
+}

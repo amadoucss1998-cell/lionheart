@@ -1,0 +1,62 @@
+<%- include('partials/header') %>
+<div class="container page">
+  <div class="breadcrumbs"><a href="/">Home</a> / <a href="/products">Products</a><% if (category) { %> / <%= category.name %><% } %></div>
+  <div class="page-head">
+    <div>
+      <h1><%= title %></h1>
+      <% if (category && category.description) { %><p class="muted mb-0"><%= category.description %></p><% } %>
+    </div>
+  </div>
+  <div class="catalog">
+    <aside class="filters">
+      <% const qs = (over) => { const o = { ...filters, ...over, page: undefined }; return '/products?' + Object.entries(o).filter(([k, v]) => v).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&'); }; %>
+      <h3>How to buy</h3>
+      <div class="fl-list">
+        <a class="fl <%= !filters.mode ? 'active' : '' %>" href="<%= qs({ mode: '' }) %>">All options</a>
+        <a class="fl <%= filters.mode === 'stock' ? 'active' : '' %>" href="<%= qs({ mode: 'stock' }) %>">Ready stock</a>
+        <a class="fl <%= filters.mode === 'source' ? 'active' : '' %>" href="<%= qs({ mode: 'source' }) %>">Source from China</a>
+      </div>
+      <h3>Categories</h3>
+      <div class="fl-list">
+        <a class="fl <%= !filters.category ? 'active' : '' %>" href="<%= qs({ category: '' }) %>">All categories</a>
+        <% categoriesNav.forEach(c => { %>
+          <a class="fl <%= filters.category === c.slug ? 'active' : '' %>" href="<%= qs({ category: c.slug }) %>"><%= c.name %></a>
+        <% }) %>
+      </div>
+    </aside>
+    <div>
+      <form class="toolbar" method="get" action="/products">
+        <% ['q', 'category', 'mode'].forEach(k => { if (filters[k]) { %><input type="hidden" name="<%= k %>" value="<%= filters[k] %>"><% } }) %>
+        <span class="muted"><%= total %> product<%= total === 1 ? '' : 's' %></span>
+        <div class="spacer"></div>
+        <label for="sort" class="sr-only">Sort</label>
+        <select id="sort" name="sort" data-autosubmit>
+          <option value="">Recommended</option>
+          <option value="newest" <%= filters.sort === 'newest' ? 'selected' : '' %>>Newest</option>
+          <option value="price_asc" <%= filters.sort === 'price_asc' ? 'selected' : '' %>>Price: low to high</option>
+          <option value="price_desc" <%= filters.sort === 'price_desc' ? 'selected' : '' %>>Price: high to low</option>
+          <option value="name" <%= filters.sort === 'name' ? 'selected' : '' %>>Name A–Z</option>
+        </select>
+        <noscript><button class="btn btn-sm">Sort</button></noscript>
+      </form>
+      <% if (items.length) { %>
+        <div class="product-grid"><% items.forEach(p => { %><%- include('partials/product-card', { p }) %><% }) %></div>
+        <% if (pages > 1) { %>
+          <nav class="pagination">
+            <% for (let i = 1; i <= pages; i++) { %>
+              <% if (i === page) { %><span class="current"><%= i %></span><% } else { %><a href="<%= qs({}) + '&page=' + i %>"><%= i %></a><% } %>
+            <% } %>
+          </nav>
+        <% } %>
+      <% } else { %>
+        <div class="card empty">
+          <%- icon('search', 48) %>
+          <h2>No products found</h2>
+          <p>We may still be able to source it for you. Tell us what you need.</p>
+          <a class="btn btn-gold" href="/request?q=<%= encodeURIComponent(filters.q || '') %><%= category ? '&category=' + category.id : '' %>">Request this product</a>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+<%- include('partials/footer') %>

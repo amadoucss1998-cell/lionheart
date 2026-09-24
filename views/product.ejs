@@ -1,0 +1,97 @@
+<%- include('partials/header') %>
+<div class="container page">
+  <div class="breadcrumbs"><a href="/">Home</a> / <a href="/products">Products</a><% if (product.category_slug) { %> / <a href="/products?category=<%= product.category_slug %>"><%= product.category_name %></a><% } %></div>
+  <% if (!product.active) { %><div class="alert alert-info">This product is hidden from customers (inactive). Only staff can see this page.</div><% } %>
+  <div class="product-layout">
+    <div class="gallery" data-gallery>
+      <div class="main">
+        <% if (product.images.length) { %><img src="/uploads/<%= product.images[0].filename %>" alt="<%= product.name %>"><% } else { %><div class="placeholder"><%- icon(product.category_icon || 'box', 96) %></div><% } %>
+      </div>
+      <% if (product.images.length > 1) { %>
+        <div class="thumbs">
+          <% product.images.forEach((img, i) => { %>
+            <button type="button" class="<%= i === 0 ? 'active' : '' %>" data-src="/uploads/<%= img.filename %>" aria-label="Show photo <%= i + 1 %>"><img src="/uploads/<%= img.filename %>" alt=""></button>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
+
+    <div>
+      <% if (product.category_name) { %><div class="pcat muted small"><%= product.category_name %></div><% } %>
+      <h1><%= product.name %></h1>
+      <% if (product.short_description) { %><p class="muted"><%= product.short_description %></p><% } %>
+      <% if (product.sku) { %><p class="small muted">Item code: <strong><%= product.sku %></strong></p><% } %>
+
+      <div class="buy-options">
+        <% if (product.sourcing_available) { %>
+        <div class="buy-option source">
+          <h3><%- icon('factory') %> Order from China</h3>
+          <div class="big-price"><% if (product.china_price !== null) { %><%= fmt(product.china_price) %> <small>/ <%= product.unit %> · factory price</small><% } else { %><span class="price-quote">Price on request</span><% } %></div>
+          <ul class="facts">
+            <li><%- icon('check', 16) %> Minimum order: <strong><%= product.moq %> <%= product.unit %><%= product.moq > 1 ? '(s)' : '' %></strong></li>
+            <% if (product.china_lead_days) { %><li><%- icon('check', 16) %> Production &amp; purchase: about <%= product.china_lead_days %> days, plus shipping</li><% } %>
+            <li><%- icon('check', 16) %> Shipping &amp; customs are added to your quotation</li>
+          </ul>
+          <form class="buy-form" method="post" action="/cart/add">
+            <input type="hidden" name="_csrf" value="<%= csrf %>">
+            <input type="hidden" name="product_id" value="<%= product.id %>">
+            <input type="hidden" name="mode" value="source">
+            <div class="qty"><label for="qty-s">Quantity</label><input id="qty-s" type="number" name="qty" min="<%= product.moq %>" value="<%= product.moq %>" step="1"></div>
+            <button class="btn btn-gold" type="submit"><%- icon('cart', 18) %> Add to cart</button>
+            <button class="btn btn-outline" type="submit" name="buy_now" value="1">Order now</button>
+          </form>
+        </div>
+        <% } %>
+
+        <% if (product.stock_available) { %>
+        <div class="buy-option stock">
+          <h3><%- icon('warehouse') %> Buy from Lionheart stock</h3>
+          <div class="big-price"><% if (product.stock_price !== null) { %><%= fmt(product.stock_price) %> <small>/ <%= product.unit %></small><% } else { %><span class="price-quote">Price on request</span><% } %></div>
+          <ul class="facts">
+            <% if (product.stock_location) { %><li><%- icon('check', 16) %> Ready at: <strong><%= product.stock_location %></strong></li><% } %>
+            <% if (product.stock_qty !== null) { %><li><%- icon('check', 16) %> <%= product.stock_qty > 0 ? `${product.stock_qty} ${product.unit}(s) available` : 'Currently out of stock. Order and we will restock for you' %></li><% } %>
+            <li><%- icon('check', 16) %> Faster delivery, no factory minimum</li>
+          </ul>
+          <form class="buy-form" method="post" action="/cart/add">
+            <input type="hidden" name="_csrf" value="<%= csrf %>">
+            <input type="hidden" name="product_id" value="<%= product.id %>">
+            <input type="hidden" name="mode" value="stock">
+            <div class="qty"><label for="qty-w">Quantity</label><input id="qty-w" type="number" name="qty" min="1" value="1" step="1" <% if (product.stock_qty > 0) { %>max="<%= product.stock_qty %>"<% } %>></div>
+            <button class="btn" type="submit"><%- icon('cart', 18) %> Add to cart</button>
+            <button class="btn btn-outline" type="submit" name="buy_now" value="1">Buy now</button>
+          </form>
+        </div>
+        <% } %>
+      </div>
+
+      <div class="row mt-2">
+        <% if (settings.whatsapp) { %>
+          <a class="btn btn-whatsapp btn-sm" target="_blank" rel="noopener" href="https://wa.me/<%= settings.whatsapp.replace(/\D/g, '') %>?text=<%= encodeURIComponent(`Hello Lionheart, I'm interested in: ${product.name}${product.sku ? ' (' + product.sku + ')' : ''}`) %>"><%- icon('chat', 16) %> Ask on WhatsApp</a>
+        <% } %>
+        <a class="btn btn-ghost btn-sm" href="/request?q=<%= encodeURIComponent('Similar to: ' + product.name) %>">Need a different spec?</a>
+        <% if (user && user.role !== 'customer') { %><a class="btn btn-ghost btn-sm" href="/admin/products/<%= product.id %>">Edit product</a><% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2 mt-3" style="gap:24px;align-items:start">
+    <% if (specs.length) { %>
+    <div class="card">
+      <div class="card-body"><h2>Specifications</h2>
+        <table class="specs"><% specs.forEach(([k, v]) => { %><tr><% if (k) { %><th><%= k %></th><td><%= v %></td><% } else { %><td colspan="2"><%= v %></td><% } %></tr><% }) %></table>
+      </div>
+    </div>
+    <% } %>
+    <% if (product.description) { %>
+    <div class="card"><div class="card-body"><h2>Description</h2><div class="prose"><%= product.description %></div></div></div>
+    <% } %>
+  </div>
+
+  <% if (related.length) { %>
+  <section class="section">
+    <div class="section-head"><h2>Related products</h2></div>
+    <div class="product-grid"><% related.forEach(p => { %><%- include('partials/product-card', { p }) %><% }) %></div>
+  </section>
+  <% } %>
+</div>
+<%- include('partials/footer') %>

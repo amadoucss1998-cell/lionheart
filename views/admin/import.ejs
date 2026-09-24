@@ -1,0 +1,40 @@
+<%- include('_header') %>
+<div class="admin-top"><div><div class="breadcrumbs"><a href="/admin/products">Products</a> / Import</div><h1>Bulk import products</h1></div></div>
+<% if (result) { %>
+  <div class="alert <%= result.errors.length ? 'alert-info' : 'alert-success' %>">
+    <strong>Import finished:</strong> <%= result.created %> created, <%= result.updated %> updated.
+    <% if (result.errors.length) { %><ul class="mt-1"><% result.errors.forEach(e => { %><li><%= e %></li><% }) %></ul><% } %>
+  </div>
+<% } %>
+<div class="admin-grid">
+  <div class="card"><div class="card-body">
+    <h2>Upload a CSV file</h2>
+    <p class="muted">Add many products at once from a spreadsheet, e.g. a price list from a supplier. In Excel or Google Sheets, use <em>File → Save as / Download → CSV</em>.</p>
+    <ol class="small">
+      <li><a href="/admin/products-import/template.csv"><strong>Download the template</strong></a> and fill in one product per row.</li>
+      <li>Upload it here. Rows with an existing <strong>SKU</strong> update that product. Other rows create new products.</li>
+      <li>New categories and suppliers named in the file are created automatically.</li>
+      <li>Add photos afterwards from each product's edit page.</li>
+    </ol>
+    <form method="post" action="/admin/products-import" enctype="multipart/form-data" class="mt-2">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <div class="field"><input type="file" name="file" accept=".csv,text/csv" required></div>
+      <button class="btn btn-gold" type="submit">Import products</button>
+    </form>
+  </div></div>
+  <div class="card"><div class="card-body">
+    <h2>Columns</h2>
+    <table class="specs small">
+      <tr><th>name</th><td>Required</td></tr>
+      <tr><th>sku</th><td>Item code (optional, unique)</td></tr>
+      <tr><th>category</th><td>Category name, e.g. <em>Tiles &amp; Ceramics</em></td></tr>
+      <tr><th>supplier</th><td>Supplier name (internal)</td></tr>
+      <tr><th>china_price, moq, china_lead_days</th><td>China sourcing option</td></tr>
+      <tr><th>stock_price, stock_qty, stock_location</th><td>Our stock option</td></tr>
+      <tr><th>sourcing_available, stock_available, featured</th><td>yes / no</td></tr>
+      <tr><th>specs</th><td>"Key: Value" lines, or separated by <code>|</code></td></tr>
+      <tr><th>unit</th><td>piece, set, sqm, ton, sheet…</td></tr>
+    </table>
+  </div></div>
+</div>
+<%- include('_footer') %>
