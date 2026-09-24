@@ -46,7 +46,7 @@
         <a class="cat-tile" href="/products?category=<%= c.slug %>">
           <span class="ci"><%- icon(c.icon, 24) %></span>
           <strong><%= c.name %></strong>
-          <small><%= counts[c.id] || 0 %> products</small>
+          <small><%= counts[c.id] || 0 %> product<%= (counts[c.id] || 0) === 1 ? '' : 's' %></small>
         </a>
       <% }) %>
     </div>

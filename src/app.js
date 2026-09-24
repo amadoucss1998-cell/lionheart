@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const express = require('express');
 const cookieSession = require('cookie-session');
 const compression = require('compression');
-const { locals, csrfGlobal } = require('./middleware');
+const { locals, csrfGlobal, assetUrl } = require('./middleware');
 const { rateLimit } = require('./rate-limit');
 const { db } = require('./db');
 const { bootstrap } = require('./seed');
@@ -15,6 +15,7 @@ function createApp() {
   app.set('views', path.join(__dirname, '..', 'views'));
   app.set('trust proxy', 1);
   app.disable('x-powered-by');
+  app.locals.asset = assetUrl; // available in every template, even error pages
 
   // Secure cookies and HSTS are switched on when the public address is HTTPS.
   // COOKIE_SECURE=true/false overrides the automatic choice.

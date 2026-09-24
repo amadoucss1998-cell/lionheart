@@ -18,6 +18,23 @@ const upload = multer({
 // CSV imports are kept in memory; they are parsed and discarded.
 const csvUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024, files: 1 } });
 
+// Version added to CSS/JS links (?v=…) so browsers load the new files after
+// every deploy instead of an old cached copy. On Vercel the commit id is used;
+// elsewhere a hash of the files' contents.
+const ASSET_VERSION = (() => {
+  if (process.env.VERCEL_GIT_COMMIT_SHA) return process.env.VERCEL_GIT_COMMIT_SHA.slice(0, 10);
+  try {
+    const dir = require('path').join(__dirname, '..', 'public', 'static');
+    const hash = crypto.createHash('sha1');
+    for (const f of ['css/style.css', 'js/app.js', 'js/motion.js', 'js/hero3d.js']) hash.update(require('fs').readFileSync(require('path').join(dir, f)));
+    return hash.digest('hex').slice(0, 10);
+  } catch {
+    return Date.now().toString(36);
+  }
+})();
+
+const assetUrl = (url) => `${url}?v=${ASSET_VERSION}`;
+
 async function locals(req, res, next) {
   if (!req.session.csrf) req.session.csrf = crypto.randomBytes(24).toString('hex');
   const [user, settings, categoriesNav] = await Promise.all([
@@ -96,4 +113,4 @@ function safeNext(next, fallback = '/') {
   return typeof next === 'string' && next.startsWith('/') && !next.startsWith('//') ? next : fallback;
 }
 
-module.exports = { upload, csvUpload, locals, flash, csrfCheck, csrfGlobal, withUpload, requireLogin, requireStaff, requireAdmin, safeNext };
+module.exports = { assetUrl, upload, csvUpload, locals, flash, csrfCheck, csrfGlobal, withUpload, requireLogin, requireStaff, requireAdmin, safeNext };
