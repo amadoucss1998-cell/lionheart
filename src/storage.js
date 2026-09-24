@@ -80,7 +80,8 @@ async function saveImages(files, folder) {
 
 // Deletes a stored image; failures are ignored (the record is already gone).
 async function removeImage(stored) {
-  if (!stored) return;
+  // Bundled stock photos (/static/…) belong to the site, never delete them.
+  if (!stored || stored.startsWith('/')) return;
   try {
     if (/^https?:\/\//.test(stored)) {
       const marker = `/storage/v1/object/public/${BUCKET}/`;
@@ -97,7 +98,9 @@ async function removeImage(stored) {
 // URL for an image stored either way.
 function imageUrl(stored) {
   if (!stored) return '';
-  return /^https?:\/\//.test(stored) ? stored : `/uploads/${encodeURIComponent(stored)}`;
+  // Full URLs (Supabase) and site paths (bundled stock photos) are used as-is.
+  if (/^https?:\/\//.test(stored) || stored.startsWith('/')) return stored;
+  return `/uploads/${encodeURIComponent(stored)}`;
 }
 
 module.exports = {

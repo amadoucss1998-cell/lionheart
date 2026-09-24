@@ -1,4 +1,6 @@
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 const bcrypt = require('bcryptjs');
 const { db, initDb } = require('./db');
 const { uniqueSlug } = require('./helpers');
@@ -142,6 +144,36 @@ async function seedCatalog() {
   });
 }
 
+// Stock photos shipped with the site (public/static/products/<sku>.jpg) are
+// attached to the matching sample products that have no photo yet. This also
+// fills in photos on databases that were seeded before the photos existed.
+const STOCK_DIR = path.join(__dirname, '..', 'public', 'static', 'products');
+
+function stockPhotoFor(sku) {
+  const file = `${String(sku).toLowerCase()}.jpg`;
+  return fs.existsSync(path.join(STOCK_DIR, file)) ? `/static/products/${file}` : null;
+}
+
+// Runs once per database (flag in settings), so a photo an admin removes later
+// is not put back on the next start.
+async function attachStockPhotos() {
+  const skus = PRODUCTS.map((p) => p[2]).filter((sku) => stockPhotoFor(sku));
+  if (!skus.length) return;
+  await db.transaction(async (tx) => {
+    await tx.run('SELECT pg_advisory_xact_lock(727277)');
+    if (await tx.get("SELECT 1 AS ok FROM settings WHERE key = 'stock_photos_attached'")) return;
+    const missing = await tx.all(
+      `SELECT id, sku FROM products p WHERE sku IN (${skus.map(() => '?').join(', ')})
+         AND NOT EXISTS (SELECT 1 FROM product_images i WHERE i.product_id = p.id)`,
+      skus
+    );
+    for (const p of missing) {
+      await tx.run('INSERT INTO product_images (product_id, filename, sort_order) VALUES (?, ?, 0)', [p.id, stockPhotoFor(p.sku)]);
+    }
+    await tx.run("INSERT INTO settings (key, value) VALUES ('stock_photos_attached', ?)", [new Date().toISOString()]);
+  });
+}
+
 // Everything the app needs before serving requests. Memoised, so it runs once
 // per process (or per serverless instance).
 let bootPromise;
@@ -150,7 +182,10 @@ function bootstrap() {
     bootPromise = (async () => {
       await initDb();
       await ensureAdmin();
-      if (process.env.SEED_DEMO !== 'false') await seedCatalog();
+      if (process.env.SEED_DEMO !== 'false') {
+        await seedCatalog();
+        await attachStockPhotos();
+      }
     })().catch((err) => {
       bootPromise = null;
       throw err;
@@ -159,7 +194,7 @@ function bootstrap() {
   return bootPromise;
 }
 
-module.exports = { ensureAdmin, seedCatalog, bootstrap };
+module.exports = { ensureAdmin, seedCatalog, attachStockPhotos, bootstrap, PRODUCTS };
 
 if (require.main === module) {
   bootstrap()
