@@ -149,28 +149,52 @@ async function seedCatalog() {
 // fills in photos on databases that were seeded before the photos existed.
 const STOCK_DIR = path.join(__dirname, '..', 'public', 'static', 'products');
 
-function stockPhotoFor(sku) {
-  const file = `${String(sku).toLowerCase()}.jpg`;
-  return fs.existsSync(path.join(STOCK_DIR, file)) ? `/static/products/${file}` : null;
+// Written by scripts/fetch-stock-photos.js at build time. Needed on Vercel,
+// where public/ is served by the CDN and isn't visible to the function.
+function builtPhotoList() {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(__dirname, 'stock-photos.generated.json'), 'utf8'));
+  } catch {
+    return [];
+  }
 }
 
-// Runs once per database (flag in settings), so a photo an admin removes later
-// is not put back on the next start.
+function stockPhotoFor(sku) {
+  const file = `${String(sku).toLowerCase()}.jpg`;
+  const exists = fs.existsSync(path.join(STOCK_DIR, file)) || builtPhotoList().includes(String(sku).toUpperCase());
+  return exists ? `/static/products/${file}` : null;
+}
+
+// Each product gets its stock photo at most once (tracked in settings), so a
+// photo an admin removes is not put back, while photos added in later
+// deploys are still attached.
 async function attachStockPhotos() {
   const skus = PRODUCTS.map((p) => p[2]).filter((sku) => stockPhotoFor(sku));
   if (!skus.length) return;
   await db.transaction(async (tx) => {
     await tx.run('SELECT pg_advisory_xact_lock(727277)');
-    if (await tx.get("SELECT 1 AS ok FROM settings WHERE key = 'stock_photos_attached'")) return;
+    const row = await tx.get("SELECT value FROM settings WHERE key = 'stock_photos_attached'");
+    let done = [];
+    try {
+      done = JSON.parse(row && row.value) || [];
+    } catch {
+      done = [];
+    }
+    if (!Array.isArray(done)) done = [];
+    const todo = skus.filter((sku) => !done.includes(sku));
+    if (!todo.length) return;
     const missing = await tx.all(
-      `SELECT id, sku FROM products p WHERE sku IN (${skus.map(() => '?').join(', ')})
+      `SELECT id, sku FROM products p WHERE sku IN (${todo.map(() => '?').join(', ')})
          AND NOT EXISTS (SELECT 1 FROM product_images i WHERE i.product_id = p.id)`,
-      skus
+      todo
     );
     for (const p of missing) {
       await tx.run('INSERT INTO product_images (product_id, filename, sort_order) VALUES (?, ?, 0)', [p.id, stockPhotoFor(p.sku)]);
     }
-    await tx.run("INSERT INTO settings (key, value) VALUES ('stock_photos_attached', ?)", [new Date().toISOString()]);
+    await tx.run(
+      "INSERT INTO settings (key, value) VALUES ('stock_photos_attached', ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value",
+      [JSON.stringify([...done, ...todo].sort())]
+    );
   });
 }
 

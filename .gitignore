@@ -4,3 +4,5 @@ data/
 *.log
 public/vendor/
 .vercel
+src/stock-photos.generated.json
+public/static/products/

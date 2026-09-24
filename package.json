@@ -10,8 +10,9 @@
     "test": "node --test \"test/*.test.js\"",
     "backup": "node src/backup.js",
     "test:e2e": "node --test \"test/e2e/*.e2e.js\"",
-    "vercel-build": "node scripts/copy-vendor.js",
-    "test:postgres": "node --test --test-concurrency=1 \"test/*.test.js\""
+    "vercel-build": "node scripts/copy-vendor.js && node scripts/fetch-stock-photos.js",
+    "test:postgres": "node --test --test-concurrency=1 \"test/*.test.js\"",
+    "photos": "node scripts/fetch-stock-photos.js"
   },
   "repository": {
     "type": "git",
