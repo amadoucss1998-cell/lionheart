@@ -10,9 +10,10 @@
     "test": "node --test \"test/*.test.js\"",
     "backup": "node src/backup.js",
     "test:e2e": "node --test \"test/e2e/*.e2e.js\"",
-    "vercel-build": "node scripts/copy-vendor.js && node scripts/fetch-stock-photos.js",
+    "vercel-build": "npm run build:js && node scripts/copy-vendor.js && node scripts/fetch-stock-photos.js",
     "test:postgres": "node --test --test-concurrency=1 \"test/*.test.js\"",
-    "photos": "node scripts/fetch-stock-photos.js"
+    "photos": "node scripts/fetch-stock-photos.js",
+    "build:js": "esbuild src/client/hero3d.js --bundle --minify --format=esm --target=es2020 --legal-comments=none --outfile=public/static/js/hero3d.js"
   },
   "repository": {
     "type": "git",
@@ -38,15 +39,16 @@
     "gsap": "3.15",
     "multer": "^2.4.0",
     "nodemailer": "^10.0.10",
-    "pg": "^8.23.0",
-    "three": "^0.186.0"
+    "pg": "^8.23.0"
   },
   "private": true,
   "engines": {
     "node": "22.x"
   },
   "devDependencies": {
+    "esbuild": "^0.28.2",
     "playwright": "^1.56.1",
-    "sharp": "^0.35.4"
+    "sharp": "^0.35.4",
+    "three": "^0.186.0"
   }
 }

@@ -74,7 +74,6 @@ function createApp() {
   app.use(compression());
   // Front-end libraries are served from node_modules so the site needs no external CDN.
   const vendor = (dir) => express.static(path.join(__dirname, '..', 'node_modules', dir), { maxAge: '7d' });
-  app.use('/vendor/three', vendor('three/build'));
   app.use('/vendor/gsap', vendor('gsap/dist'));
   // Self-hosted fonts (no Google Fonts request, works offline and under strict CSP).
   for (const dir of ['@fontsource-variable/fraunces/files', '@fontsource/instrument-sans/files', '@fontsource/jetbrains-mono/files']) {

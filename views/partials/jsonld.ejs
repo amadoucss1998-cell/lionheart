@@ -1,0 +1,23 @@
+<%# Structured data for search engines (business and, on product pages, the product). %>
+<% const base = locals.siteUrl || '';
+   const org = {
+     '@context': 'https://schema.org',
+     '@type': 'Organization',
+     name: settings.company_name,
+     url: base + '/',
+     logo: base + '/static/img/icon-512.png',
+     email: settings.email,
+     telephone: settings.phone,
+     address: { '@type': 'PostalAddress', streetAddress: 'Center and Carey Street', addressLocality: 'Monrovia', addressCountry: 'LR' },
+   };
+   const data = [org];
+   if (locals.product) {
+     const offers = [];
+     if (product.sourcing_available && product.china_price !== null) offers.push({ '@type': 'Offer', priceCurrency: settings.currency || 'USD', price: product.china_price, availability: 'https://schema.org/PreOrder', url: base + '/products/' + product.slug });
+     if (product.stock_available && product.stock_price !== null) offers.push({ '@type': 'Offer', priceCurrency: settings.currency || 'USD', price: product.stock_price, availability: product.stock_qty === 0 ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock', url: base + '/products/' + product.slug });
+     const item = { '@context': 'https://schema.org', '@type': 'Product', name: product.name, sku: product.sku || undefined, category: product.category_name || undefined, description: product.short_description || undefined, brand: { '@type': 'Brand', name: 'Lionheart' } };
+     if (product.images && product.images.length) item.image = product.images.map((i) => { const u = img(i.filename); return /^https?:/.test(u) ? u : base + u; });
+     if (offers.length) item.offers = offers;
+     data.push(item);
+   } %>
+<script type="application/ld+json"><%- JSON.stringify(data.length === 1 ? data[0] : data).replace(/</g, '\\u003c') %></script>

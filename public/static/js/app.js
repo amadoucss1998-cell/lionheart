@@ -1,4 +1,17 @@
 (function () {
+  // Load the 3D globe only after the page has finished loading and the browser
+  // is idle, so it never delays text, buttons or images. Skipped on data saver.
+  var globe = document.getElementById('hero-globe');
+  if (globe && globe.dataset.src) {
+    var saveData = navigator.connection && navigator.connection.saveData;
+    var start = function () { import(globe.dataset.src).catch(function () {}); };
+    var whenIdle = function () { (window.requestIdleCallback || function (f) { setTimeout(f, 200); })(start, { timeout: 2500 }); };
+    if (!saveData) {
+      if (document.readyState === 'complete') whenIdle();
+      else window.addEventListener('load', whenIdle);
+    }
+  }
+
   // Product gallery thumbnails
   document.querySelectorAll('[data-gallery]').forEach(function (g) {
     var main = g.querySelector('.main img');

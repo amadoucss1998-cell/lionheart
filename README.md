@@ -87,11 +87,17 @@ TWILIO_WHATSAPP_FROM=14155238886          # your Twilio WhatsApp sender
 TWILIO_CONTENT_SID=HXxxxxxxxx             # approved template (recommended)
 ```
 
+## Presenting the platform
+
+- **`/tour`**: an unlisted page for clients, not in the menu and hidden from search engines. It shows what the platform does for customers and for the team, with screenshots and a five-minute test drive.
+- **Admin → Settings → Sample data**: loads 5 sample orders (one at each main stage), 2 sourcing requests and 4 suppliers, so the dashboard looks realistic in a demo. Sample records are labelled (`LH-SAMPLE-…`, "(sample)") and removed with one click; real orders are never touched.
+- **Link previews**: sharing any page on WhatsApp or social media shows a branded preview. Product pages use the product's photo.
+
 ## Front end
 
 - The home page hero shows an interactive **Three.js** globe. Gold trade lanes run from China to Dubai and West Africa, with cargo moving along them and a mouse parallax effect.
 - **GSAP + ScrollTrigger** handle the entrance animations, scroll reveals, count-up numbers, 3D card tilt and magnetic buttons.
-- Both libraries are served from `node_modules`, so no external CDN is needed.
+- The globe code is bundled with esbuild from `src/client/hero3d.js` (`npm run build:js`) and only loads after the page is ready. It's skipped when the phone has data saver on. Fonts are self-hosted, so no external CDN is needed.
 - Animations are turned off for visitors with *reduced motion* enabled. Without WebGL the globe falls back to the static gradient.
 - The layout is responsive and mobile-first. A WhatsApp button appears on every page.
 

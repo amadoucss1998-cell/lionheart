@@ -1,0 +1,14 @@
+{
+  "name": "Lionheart Trade",
+  "short_name": "Lionheart",
+  "description": "Source products from China and buy from Lionheart stock. Delivered to West Africa.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0d1824",
+  "icons": [
+    { "src": "/static/img/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/static/img/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/static/img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

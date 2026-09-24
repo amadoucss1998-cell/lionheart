@@ -5,9 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0d1824">
   <title><%= locals.title ? `${title} | Lionheart Trade` : `${settings.company_name} — China Sourcing, Cargo & Trade` %></title>
-  <meta name="description" content="<%= settings.tagline %> Electronics, machinery, heavy equipment, vehicles, furniture, building materials, tiles, sanitary ware, Decra & zinc roofing, doors and more — shipped from China and Dubai.">
+<% const pageTitle = locals.title ? `${title} | Lionheart Trade` : `${settings.company_name} — China Sourcing, Cargo & Trade`;
+   const pageDescription = locals.description || `${settings.tagline} Electronics, machinery, heavy equipment, vehicles, furniture, building materials, tiles, sanitary ware, Decra & zinc roofing, doors and more — shipped from China and Dubai.`;
+   const base = locals.siteUrl || '';
+   const pageUrl = base + (locals.path || '/');
+   const shareImage = locals.shareImage ? (/^https?:/.test(locals.shareImage) ? locals.shareImage : base + locals.shareImage) : base + '/static/img/og.jpg'; %>
+  <meta name="description" content="<%= pageDescription %>">
+  <link rel="canonical" href="<%= pageUrl %>">
+  <% if (locals.noindex) { %><meta name="robots" content="noindex, nofollow"><% } %>
+  <meta property="og:type" content="<%= locals.product ? 'product' : 'website' %>">
+  <meta property="og:site_name" content="Lionheart Trade">
+  <meta property="og:title" content="<%= pageTitle %>">
+  <meta property="og:description" content="<%= pageDescription %>">
+  <meta property="og:url" content="<%= pageUrl %>">
+  <meta property="og:image" content="<%= shareImage %>">
+  <meta property="og:image:alt" content="<%= pageTitle %>">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="/static/img/favicon.png">
+  <link rel="apple-touch-icon" href="/static/img/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.webmanifest">
   <link rel="preload" href="/vendor/fonts/fraunces-latin-full-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/vendor/fonts/instrument-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="<%= asset('/static/css/style.css') %>">
+  <% if (locals.path === '/' || locals.product) { %><%- include('jsonld') %><% } %>
 </head>

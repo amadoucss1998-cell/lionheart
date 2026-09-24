@@ -1,0 +1,105 @@
+<%- include('partials/header') %>
+<section class="tour-hero">
+  <div class="container">
+    <span class="kicker">Platform tour</span>
+    <h1>Your trade business, <em>online</em> and running itself.</h1>
+    <p class="lead">A complete ordering platform for Lionheart: customers browse your catalog, order from China or from stock and follow every shipment, while your team prices, tracks and manages everything from one admin panel.</p>
+    <div class="row mt-2">
+      <a class="btn btn-gold btn-lg" href="#try">Try it yourself <%- icon('arrow', 18, 'arrow') %></a>
+      <a class="btn btn-ghost btn-lg" href="/">Open the website</a>
+    </div>
+    <ul class="tour-facts">
+      <li><strong>2</strong><span>ways to buy: factory-direct or from stock</span></li>
+      <li><strong>9</strong><span>tracked stages, from order to delivery</span></li>
+      <li><strong>0</strong><span>payments taken before your quotation is accepted</span></li>
+      <li><strong>24/7</strong><span>orders arrive with email and WhatsApp alerts</span></li>
+    </ul>
+  </div>
+</section>
+
+<div class="container">
+  <section class="tour-block">
+    <div class="tour-text">
+      <span class="kicker">For your customers</span>
+      <h2>A shop built for how trade really works</h2>
+      <ul class="tour-list">
+        <li><strong>Two ways to buy on every product.</strong> Factory price with minimum order and lead time, or your ready-stock price and quantity.</li>
+        <li><strong>Quotation-first ordering.</strong> Customers submit an order, you confirm the final price, freight and timeline, and they accept online. No surprises, no chargebacks.</li>
+        <li><strong>"Request a product" with photo upload,</strong> for everything not in the catalog.</li>
+        <li><strong>Live order tracking</strong> through 9 stages with container numbers and your messages. Guests can track with order number and email.</li>
+        <li><strong>Built for phones and slow networks:</strong> fast loading, WhatsApp on every page, installable like an app.</li>
+      </ul>
+    </div>
+    <figure class="tour-shot"><img src="/static/tour/customer-tracking.jpg" alt="Customer order tracking page" loading="lazy" width="1440" height="900"><figcaption>What your customer sees: every stage of their order, with the container number.</figcaption></figure>
+  </section>
+
+  <section class="tour-block reverse">
+    <div class="tour-text">
+      <span class="kicker">For your team</span>
+      <h2>One admin panel for the whole operation</h2>
+      <ul class="tour-list">
+        <li><strong>Dashboard</strong> with new orders to quote, open orders and new requests at a glance.</li>
+        <li><strong>Quotation builder:</strong> enter unit prices, freight and charges; the customer is notified and accepts online.</li>
+        <li><strong>Private supplier directory</strong> linked to products. Customers never see your suppliers.</li>
+        <li><strong>Bulk import</strong> of supplier price lists from Excel/CSV, product photos, categories and featured items.</li>
+        <li><strong>Instant alerts</strong> by email and WhatsApp for every new order and request.</li>
+        <li><strong>Team accounts</strong> for staff and admins, and CSV export of all orders.</li>
+      </ul>
+    </div>
+    <figure class="tour-shot"><img src="/static/tour/admin-dashboard.jpg" alt="Admin dashboard" loading="lazy" width="1440" height="900"><figcaption>The team dashboard, shown here with sample data.</figcaption></figure>
+  </section>
+
+  <section class="tour-block">
+    <div class="tour-text">
+      <span class="kicker">Quotations</span>
+      <h2>Price an order in under a minute</h2>
+      <p class="muted">Each order shows the products, the customer's notes and the supplier behind every line. Enter your prices and freight, add a message, and send. The customer gets the quotation on their order page and accepts with one click, then you move it through purchasing, inspection, shipping and delivery.</p>
+    </div>
+    <figure class="tour-shot"><img src="/static/tour/admin-quote.jpg" alt="Order quotation screen" loading="lazy" width="1440" height="900"><figcaption>Building a quotation, with the supplier shown next to each line.</figcaption></figure>
+  </section>
+
+  <section class="tour-mobile">
+    <figure class="phone"><img src="/static/tour/mobile.jpg" alt="The website on a phone" loading="lazy" width="780" height="1688"></figure>
+    <div class="tour-text">
+      <span class="kicker">Mobile first</span>
+      <h2>Made for the phones your customers use</h2>
+      <p class="muted">Most buyers in West Africa browse on a phone. Every page is designed and tested on small screens: the catalog button is visible without scrolling, photos are compressed before upload, and the page stays light on mobile data.</p>
+      <ul class="tour-list compact">
+        <li>Tested on 360–412px phones and slow 4G</li>
+        <li>WhatsApp button on every page</li>
+        <li>Share previews for WhatsApp and social media</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="tour-tech">
+    <span class="kicker">Under the hood</span>
+    <h2>Secure, fast and ready to grow</h2>
+    <div class="services">
+      <div class="service"><%- icon('shield', 24) %><h3>Secure by default</h3><p>Encrypted HTTPS, protected forms, hashed passwords, rate-limited sign-in and database access rules.</p></div>
+      <div class="service"><%- icon('bolt', 24) %><h3>Fast</h3><p>Global CDN, compressed assets, caching and a lightweight 3D globe that loads last, so pages open quickly even on 4G.</p></div>
+      <div class="service"><%- icon('layers', 24) %><h3>Reliable data</h3><p>Supabase database and photo storage, with backups and access rules managed in one place.</p></div>
+      <div class="service"><%- icon('globe', 24) %><h3>Found on Google</h3><p>Sitemap, product data for search results and link previews for sharing.</p></div>
+      <div class="service"><%- icon('check', 24) %><h3>Tested</h3><p>Automated tests cover ordering, quotations, alerts, uploads and security on every change.</p></div>
+      <div class="service"><%- icon('tool', 24) %><h3>Yours to extend</h3><p>Clean, documented code. Payments, more languages or a mobile app can be added later.</p></div>
+    </div>
+  </section>
+
+  <section class="tour-try" id="try">
+    <span class="kicker">Try it yourself</span>
+    <h2>A five-minute test drive</h2>
+    <ol class="tour-steps">
+      <li><strong>Shop as a customer.</strong> <a href="/products">Open the catalog</a>, pick a product and add it to the cart, either from China or from stock.</li>
+      <li><strong>Place the order.</strong> Check out as a guest. You'll get an order number and a live order page.</li>
+      <li><strong>Switch to the team view.</strong> <a href="/login?next=/admin">Sign in to the admin</a> with the demo login you received, and open the new order.</li>
+      <li><strong>Send a quotation.</strong> Enter prices and freight, then press "Save &amp; send quotation".</li>
+      <li><strong>Accept and ship.</strong> Back on the customer's order page, accept the quote. In the admin, move it to "Shipped" with a container number, and watch the customer's page update.</li>
+    </ol>
+    <div class="cta-band mt-2">
+      <div><h2>Ready to take <em>Lionheart</em> online?</h2><p>Your catalog, your suppliers and your process, working for you around the clock.</p></div>
+      <div class="spacer"></div>
+      <a class="btn btn-gold btn-lg" href="/">Explore the website <%- icon('arrow', 18, 'arrow') %></a>
+    </div>
+  </section>
+</div>
+<%- include('partials/footer') %>

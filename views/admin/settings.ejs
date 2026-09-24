@@ -16,6 +16,20 @@
   <button class="btn btn-gold" type="submit">Save settings</button>
 </div></form>
 
+<section class="card mt-3" id="sample-data" style="max-width:820px"><div class="card-body">
+  <h2><%- icon('layers', 20) %> Sample data for demos</h2>
+  <p class="muted">Fill the admin with realistic sample activity (5 orders at different stages, 2 sourcing requests and 4 suppliers) to show how the platform works. Sample records are clearly labelled (<code>LH-SAMPLE-…</code>, "(sample)") and can be removed in one click. Real orders are never touched.</p>
+  <div class="row">
+    <form method="post" action="/admin/settings/sample-data"><input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="action" value="load">
+      <button class="btn btn-gold" type="submit"><%= sampleData ? 'Reload sample data' : 'Load sample data' %></button></form>
+    <% if (sampleData) { %>
+    <form method="post" action="/admin/settings/sample-data" data-confirm="Remove all sample orders, requests and suppliers?"><input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="action" value="remove">
+      <button class="btn btn-danger" type="submit">Remove sample data</button></form>
+    <span class="status status-delivered">Sample data is loaded</span>
+    <% } %>
+  </div>
+</div></section>
+
 <section class="card mt-3" id="alerts" style="max-width:820px"><div class="card-body">
   <h2><%- icon('chat', 20) %> New order alerts</h2>
   <p class="muted">Your team gets a message the moment a customer places an order<%= values.alert_on_requests === 'no' ? '' : ' or sends a sourcing request' %>, with the customer, destination, items and a link to the order.</p>

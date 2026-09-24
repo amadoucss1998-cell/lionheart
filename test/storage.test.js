@@ -89,7 +89,10 @@ test('product photos are stored in a public Supabase bucket', async () => {
   // The shop links straight to Supabase, and the CSP allows it.
   const page = await admin.req(`/products/${p.slug}`);
   assert.match(page.headers.get('content-security-policy'), new RegExp(`img-src 'self' data: blob: ${supabaseUrl}`));
-  assert.ok((await page.text()).includes(images[0].filename));
+  const html = await page.text();
+  assert.ok(html.includes(images[0].filename));
+  // The product photo is used for link previews too.
+  assert.ok(html.includes(`<meta property="og:image" content="${images[0].filename}">`));
 
   // Removing a photo and deleting the product removes the files from storage.
   const edit = await admin.csrf(`/admin/products/${p.id}`);

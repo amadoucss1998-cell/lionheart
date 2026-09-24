@@ -33,6 +33,28 @@ const ASSET_VERSION = (() => {
   }
 })();
 
+// The category menu is on every page; cache it briefly. Admin changes to
+// products or categories call clearCatalogCache() so they show immediately.
+const MENU_TTL_MS = 30000;
+let menuCache = null;
+async function menuCategories() {
+  if (menuCache && menuCache.expires > Date.now()) return menuCache.value;
+  const value = await db.all(
+    `SELECT id, name, slug, icon, description, EXISTS (SELECT 1 FROM products p WHERE p.category_id = c.id AND p.active = 1) AS has_products
+     FROM categories c ORDER BY sort_order, name`
+  );
+  menuCache = { value, expires: Date.now() + MENU_TTL_MS };
+  return value;
+}
+function clearCatalogCache() {
+  menuCache = null;
+}
+
+function siteUrlFor(req) {
+  const configured = process.env.PUBLIC_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : '');
+  return (configured || `${req.protocol}://${req.get('host')}`).replace(/\/+$/, '');
+}
+
 const assetUrl = (url) => `${url}?v=${ASSET_VERSION}`;
 
 async function locals(req, res, next) {
@@ -40,10 +62,7 @@ async function locals(req, res, next) {
   const [user, settings, categoriesNav] = await Promise.all([
     req.session.userId ? db.get('SELECT id, name, email, phone, company, country, role FROM users WHERE id = ?', [req.session.userId]) : null,
     getSettings(),
-    db.all(
-      `SELECT id, name, slug, icon, description, EXISTS (SELECT 1 FROM products p WHERE p.category_id = c.id AND p.active = 1) AS has_products
-       FROM categories c ORDER BY sort_order, name`
-    ),
+    menuCategories(),
   ]);
   if (req.session.userId && !user) req.session.userId = null;
   req.user = user || null;
@@ -55,6 +74,8 @@ async function locals(req, res, next) {
   req.session.flash = null;
   res.locals.cartCount = (req.session.cart || []).length;
   res.locals.path = req.path;
+  // Absolute site address for link previews, canonical URLs and the sitemap.
+  res.locals.siteUrl = siteUrlFor(req);
   res.locals.h = helpers;
   res.locals.icon = icon;
   res.locals.img = storage.imageUrl;
@@ -113,4 +134,4 @@ function safeNext(next, fallback = '/') {
   return typeof next === 'string' && next.startsWith('/') && !next.startsWith('//') ? next : fallback;
 }
 
-module.exports = { assetUrl, upload, csvUpload, locals, flash, csrfCheck, csrfGlobal, withUpload, requireLogin, requireStaff, requireAdmin, safeNext };
+module.exports = { assetUrl, clearCatalogCache, siteUrlFor, upload, csvUpload, locals, flash, csrfCheck, csrfGlobal, withUpload, requireLogin, requireStaff, requireAdmin, safeNext };

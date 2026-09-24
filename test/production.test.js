@@ -70,12 +70,12 @@ test('session cookies are Secure and HttpOnly behind HTTPS', async () => {
 });
 
 test('static assets and front-end libraries are served compressed', async () => {
-  for (const url of ['/static/css/style.css', '/static/js/hero3d.js', '/vendor/three/three.module.js', '/vendor/three/three.core.js', '/vendor/gsap/gsap.min.js', '/vendor/gsap/ScrollTrigger.min.js']) {
+  for (const url of ['/static/css/style.css', '/static/js/hero3d.js', '/vendor/gsap/gsap.min.js', '/vendor/gsap/ScrollTrigger.min.js']) {
     const res = await viaProxy(url, { headers: { 'accept-encoding': 'gzip' } });
     assert.strictEqual(res.status, 200, url);
     await res.arrayBuffer();
   }
-  const three = await viaProxy('/vendor/three/three.module.js', { headers: { 'accept-encoding': 'gzip' } });
+  const three = await viaProxy('/static/js/hero3d.js', { headers: { 'accept-encoding': 'gzip' } });
   assert.strictEqual(three.headers.get('content-encoding'), 'gzip');
 });
 

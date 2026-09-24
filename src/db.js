@@ -348,13 +348,27 @@ function initDb() {
   return initPromise;
 }
 
+// Settings are read on every page, so they are kept in memory briefly.
+// Changes made through setSetting() clear the cache immediately; other
+// server instances (e.g. on Vercel) pick them up within SETTINGS_TTL_MS.
+const SETTINGS_TTL_MS = 30000;
+let settingsCache = null;
+
 async function getSettings() {
+  if (settingsCache && settingsCache.expires > Date.now()) return { ...settingsCache.value };
   const rows = await db.all('SELECT key, value FROM settings');
-  return Object.fromEntries(rows.map((r) => [r.key, r.value]));
+  const value = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+  settingsCache = { value, expires: Date.now() + SETTINGS_TTL_MS };
+  return { ...value };
 }
 
 async function setSetting(key, value) {
   await db.run('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value', [key, value]);
+  settingsCache = null;
 }
 
-module.exports = { db, initDb, getSettings, setSetting, DATA_DIR, DEFAULT_SETTINGS, SCHEMA, translate };
+function clearSettingsCache() {
+  settingsCache = null;
+}
+
+module.exports = { db, initDb, getSettings, setSetting, clearSettingsCache, DATA_DIR, DEFAULT_SETTINGS, SCHEMA, translate };

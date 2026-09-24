@@ -1,15 +1,21 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { db, getSettings, setSetting, DEFAULT_SETTINGS } = require('../db');
-const { upload, csvUpload, withUpload, flash, requireStaff, requireAdmin } = require('../middleware');
+const { upload, csvUpload, withUpload, flash, requireStaff, requireAdmin, clearCatalogCache } = require('../middleware');
 const { listProducts, getProduct } = require('../catalog');
 const { loadOrderDetail } = require('../orders');
 const { saveImages, removeImage } = require('../storage');
 const h = require('../helpers');
 const notify = require('../notify');
+const demo = require('../demo');
 
 const router = express.Router();
 router.use(requireStaff);
+// Any change made in the admin can affect the cached category menu.
+router.use((req, res, next) => {
+  if (req.method === 'POST') res.on('finish', clearCatalogCache);
+  next();
+});
 
 const trim = (v, max = 4000) => String(v || '').trim().slice(0, max);
 const checkbox = (v) => (v ? 1 : 0);
@@ -573,13 +579,14 @@ router.post('/users/:id/role', requireAdmin, async (req, res) => {
 // ---------------- Settings ----------------
 
 router.get('/settings', requireAdmin, async (req, res) => {
-  const [values, alerts, alertLog] = await Promise.all([getSettings(), notify.status(), notify.recentLog()]);
+  const [values, alerts, alertLog, sampleData] = await Promise.all([getSettings(), notify.status(), notify.recentLog(), demo.hasSampleData()]);
   res.render('admin/settings', {
     title: 'Settings',
     values,
     keys: Object.keys(DEFAULT_SETTINGS).filter((k) => !k.startsWith('alert_')),
     alerts,
     alertLog,
+    sampleData,
   });
 });
 
@@ -589,6 +596,21 @@ router.post('/settings', requireAdmin, async (req, res) => {
   }
   flash(req, 'success', 'Settings saved.');
   res.redirect(req.body.alerts_form ? '/admin/settings#alerts' : '/admin/settings');
+});
+
+router.post('/settings/sample-data', requireAdmin, async (req, res) => {
+  if (req.body.action === 'remove') {
+    await demo.removeSampleData();
+    flash(req, 'success', 'Sample orders, requests and suppliers removed.');
+  } else {
+    try {
+      await demo.loadSampleData(req.user.id);
+      flash(req, 'success', 'Sample data loaded: 5 orders at different stages, 2 sourcing requests and 4 suppliers.');
+    } catch (err) {
+      flash(req, 'error', err.message);
+    }
+  }
+  res.redirect('/admin/settings#sample-data');
 });
 
 router.post('/settings/test-alert', requireAdmin, async (req, res) => {

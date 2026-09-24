@@ -62,7 +62,14 @@ router.get('/products/:slug', async (req, res) => {
     return res.status(404).render('error', { title: 'Product not found', message: 'This product is no longer available. Try searching the catalog or send us a sourcing request.' });
   }
   const related = (await listProducts({ category: product.category_slug, limit: 5 })).items.filter((p) => p.id !== product.id).slice(0, 4);
-  res.render('product', { title: product.name, product, specs: parseSpecs(product.specs), related });
+  res.render('product', {
+    title: product.name,
+    description: [product.short_description, product.category_name && `${product.category_name} from Lionheart: order from China or buy from stock.`].filter(Boolean).join('. '),
+    shareImage: product.images[0] ? require('../storage').imageUrl(product.images[0].filename) : null,
+    product,
+    specs: parseSpecs(product.specs),
+    related,
+  });
 });
 
 // ---------- Cart ----------
@@ -271,6 +278,36 @@ router.post('/request', ...withUpload(upload.single('image')), async (req, res) 
   runInBackground(notify.notifyNewRequest(requestId, siteUrl(req)));
   res.render('request-sent', { title: 'Request received', ref });
 });
+
+// ---------- Search engines ----------
+
+router.get('/robots.txt', (req, res) => {
+  res.type('text/plain').send(`User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /account\nDisallow: /cart\nDisallow: /checkout\nDisallow: /orders/\nSitemap: ${res.locals.siteUrl}/sitemap.xml\n`);
+});
+
+router.get('/sitemap.xml', async (req, res) => {
+  const base = res.locals.siteUrl;
+  const products = await db.all('SELECT slug, updated_at FROM products WHERE active = 1 ORDER BY id');
+  const urls = [
+    ['/', null],
+    ['/products', null],
+    ['/how-it-works', null],
+    ['/request', null],
+    ['/contact', null],
+    ...res.locals.categoriesNav.map((c) => [`/products?category=${encodeURIComponent(c.slug)}`, null]),
+    ...products.map((p) => [`/products/${p.slug}`, p.updated_at]),
+  ];
+  const esc = (v) => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const body = urls
+    .map(([u, d]) => `  <url><loc>${esc(base + u)}</loc>${d ? `<lastmod>${new Date(d).toISOString().slice(0, 10)}</lastmod>` : ''}</url>`)
+    .join('\n');
+  res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`);
+});
+
+// Unlisted product tour for presenting the platform to a client.
+router.get('/tour', (req, res) =>
+  res.render('tour', { title: 'Platform tour', description: 'A guided tour of the Lionheart trade platform: customer shop, quotations, order tracking and the team admin.', noindex: true })
+);
 
 router.get('/how-it-works', (req, res) => res.render('how-it-works', { title: 'How it works' }));
 router.get('/contact', (req, res) => res.render('contact', { title: 'Contact us' }));

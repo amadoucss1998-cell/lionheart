@@ -16,7 +16,7 @@
       </div>
     </div>
     <div class="hero-visual">
-      <div id="hero-globe" aria-hidden="true"></div>
+      <div id="hero-globe" aria-hidden="true" data-src="<%= asset('/static/js/hero3d.js') %>"></div>
       <ul class="hero-legend">
         <li><span class="code">CAN</span><div><strong>Guangzhou, China</strong><small>Sourcing, purchasing &amp; inspection</small></div></li>
         <li><span class="code">DXB</span><div><strong>Dubai, UAE</strong><small>Ready stock &amp; re-export</small></div></li>
@@ -121,6 +121,26 @@
     <div class="product-grid"><% latest.forEach(p => { %><%- include('partials/product-card', { p }) %><% }) %></div>
   </section>
   <% } %>
+
+  <section class="section faq-section">
+    <div class="faq-layout">
+      <div>
+        <span class="kicker">Questions</span>
+        <h2>Before you order</h2>
+        <p class="muted">Anything else? Our team answers on WhatsApp and email.</p>
+        <% if (settings.whatsapp) { %><a class="btn btn-ghost mt-2" href="https://wa.me/<%= settings.whatsapp.replace(/\D/g, '') %>" target="_blank" rel="noopener"><%- icon('chat', 18) %> Ask us on WhatsApp</a><% } %>
+      </div>
+      <div class="faq">
+        <details open><summary>Do I pay when I place an order?</summary><p>No. Your order is a request for a quotation. We confirm the final price, shipping and delivery time first, and you only pay after you accept the quote online.</p></details>
+        <details><summary>What is the difference between "From China" and "In stock"?</summary><p>"From China" means we buy from the factory for you at factory prices, usually with a minimum order quantity. "In stock" items are already in our warehouse, so you get them faster and can order smaller quantities.</p></details>
+        <details><summary>How long does delivery take?</summary><p>It depends on the product, the factory's production time and the shipping method you choose: sea freight (full or shared container), air freight or RoRo for vehicles and machinery. Your quotation states the expected timeline before you commit.</p></details>
+        <details><summary>Do you check the goods before shipping?</summary><p>Yes. Goods are inspected at our warehouse before loading. If something is not right, we deal with the supplier before your goods leave China.</p></details>
+        <details><summary>Can you find a product that is not on the website?</summary><p>Yes, most of what we source is not listed. Send a photo or a description through "Request a product" and our team will come back with options and prices.</p></details>
+        <details><summary>Do you handle customs clearing?</summary><p>Clearing and forwarding is our core business. We prepare the documents, handle duties and clearing at the port, and can deliver to your door or site.</p></details>
+        <details><summary>How do I follow my order?</summary><p>Every order has its own page showing each stage, from purchasing and inspection to shipping, arrival and delivery, including the container or tracking number. Use "Track an order" or your account.</p></details>
+      </div>
+    </div>
+  </section>
 
   <div class="cta-band">
     <div><h2>Need something that's <em>not listed</em>?</h2><p>Send us a photo or a description. Our team in China will find the manufacturer and come back with prices and options.</p></div>
