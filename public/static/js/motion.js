@@ -46,7 +46,7 @@
 
   if (window.ScrollTrigger) {
     // Staggered reveal for grids of cards
-    var groups = ['.two-ways > *', '.cat-tile', '.pcard', '.steps .st', '.stats .stat', '.buy-option', '.grid-3 > .card', '.cart-item'];
+    var groups = ['.two-ways > *', '.cat-tile', '.pcard', '.steps .st', '.service', '.stats .stat', '.buy-option', '.grid-3 > .card', '.cart-item'];
     groups.forEach(function (sel) {
       var els = document.querySelectorAll(sel);
       if (!els.length) return;
@@ -78,16 +78,36 @@
 
   counters();
 
+  if (window.ScrollTrigger) {
+    // Web fonts and images change the page height after the first measurement;
+    // re-measure so every reveal triggers at the right scroll position.
+    var refresh = function () { window.ScrollTrigger.refresh(); };
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(refresh);
+    window.addEventListener('load', refresh);
+    // Safety net: anything still hidden once it is on screen is shown anyway.
+    var reveal = function () {
+      document.querySelectorAll('.two-ways > *, .cat-tile, .pcard, .steps .st, .service, .stats .stat, .buy-option, .grid-3 > .card, .cart-item').forEach(function (el) {
+        var r = el.getBoundingClientRect();
+        if (r.top < window.innerHeight && r.bottom > 0 && getComputedStyle(el).opacity === '0') {
+          gsap.to(el, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out', overwrite: true, clearProps: 'transform' });
+        }
+      });
+    };
+    var t;
+    window.addEventListener('scroll', function () { clearTimeout(t); t = setTimeout(reveal, 250); }, { passive: true });
+    setTimeout(reveal, 1500);
+  }
+
   // 3D tilt on product and category cards (pointer devices only)
   if (window.matchMedia('(hover: hover)').matches) {
-    document.querySelectorAll('.pcard, .cat-tile').forEach(function (card) {
+    document.querySelectorAll('.pcard').forEach(function (card) {
       gsap.set(card, { transformPerspective: 800 });
       var rx = gsap.quickTo(card, 'rotationX', { duration: 0.4, ease: 'power2.out' });
       var ry = gsap.quickTo(card, 'rotationY', { duration: 0.4, ease: 'power2.out' });
       card.addEventListener('pointermove', function (e) {
         var r = card.getBoundingClientRect();
-        ry(((e.clientX - r.left) / r.width - 0.5) * 8);
-        rx(-((e.clientY - r.top) / r.height - 0.5) * 8);
+        ry(((e.clientX - r.left) / r.width - 0.5) * 5);
+        rx(-((e.clientY - r.top) / r.height - 0.5) * 5);
       });
       card.addEventListener('pointerleave', function () { rx(0); ry(0); });
     });

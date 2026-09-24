@@ -41,7 +41,7 @@ async function locals(req, res, next) {
     req.session.userId ? db.get('SELECT id, name, email, phone, company, country, role FROM users WHERE id = ?', [req.session.userId]) : null,
     getSettings(),
     db.all(
-      `SELECT id, name, slug, icon, EXISTS (SELECT 1 FROM products p WHERE p.category_id = c.id AND p.active = 1) AS has_products
+      `SELECT id, name, slug, icon, description, EXISTS (SELECT 1 FROM products p WHERE p.category_id = c.id AND p.active = 1) AS has_products
        FROM categories c ORDER BY sort_order, name`
     ),
   ]);

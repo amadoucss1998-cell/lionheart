@@ -39,8 +39,8 @@ function createApp() {
   const csp = [
     "default-src 'self'",
     "script-src 'self'",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
+    "style-src 'self' 'unsafe-inline'",
+    "font-src 'self'",
     `img-src 'self' data: blob:${storage.storageOrigin ? ` ${storage.storageOrigin}` : ''}`,
     "connect-src 'self'",
     "object-src 'none'",
@@ -76,6 +76,10 @@ function createApp() {
   const vendor = (dir) => express.static(path.join(__dirname, '..', 'node_modules', dir), { maxAge: '7d' });
   app.use('/vendor/three', vendor('three/build'));
   app.use('/vendor/gsap', vendor('gsap/dist'));
+  // Self-hosted fonts (no Google Fonts request, works offline and under strict CSP).
+  for (const dir of ['@fontsource-variable/fraunces/files', '@fontsource/instrument-sans/files', '@fontsource/jetbrains-mono/files']) {
+    app.use('/vendor/fonts', vendor(dir));
+  }
   // public/ is served as-is (on Vercel its CDN serves these files directly).
   app.use(express.static(path.join(__dirname, '..', 'public'), { maxAge: '7d', index: false }));
   if (!storage.useSupabase) app.use('/uploads', express.static(storage.UPLOAD_DIR, { maxAge: '30d', fallthrough: false }));

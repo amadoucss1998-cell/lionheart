@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0d1824">
   <title><%= locals.title ? `${title} | Lionheart Trade` : `${settings.company_name} — China Sourcing, Cargo & Trade` %></title>
   <meta name="description" content="<%= settings.tagline %> Electronics, machinery, heavy equipment, vehicles, furniture, building materials, tiles, sanitary ware, Decra & zinc roofing, doors and more — shipped from China and Dubai.">
   <link rel="icon" href="/static/img/favicon.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="preload" href="/vendor/fonts/fraunces-latin-full-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/vendor/fonts/instrument-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="<%= asset('/static/css/style.css') %>">
 </head>
