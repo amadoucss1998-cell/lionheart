@@ -60,18 +60,6 @@
 
     <div class="stack">
       <section class="card form-section">
-        <h2>Publishing</h2>
-        <div class="card-body">
-          <label class="check"><input type="checkbox" name="active" value="1" <%= product.active ? 'checked' : '' %>> Visible on the website</label>
-          <label class="check mt-1"><input type="checkbox" name="featured" value="1" <%= product.featured ? 'checked' : '' %>> Featured on the home page</label>
-          <div class="field mt-2"><label for="unit">Selling unit</label><input id="unit" name="unit" type="text" list="units" value="<%= v('unit') || 'piece' %>">
-            <datalist id="units"><% ['piece', 'set', 'unit', 'sqm', 'sheet', 'ton', 'meter', 'carton', 'pallet', 'container', 'kg', 'box', 'roll', 'bag'].forEach(u => { %><option value="<%= u %>"><% }) %></datalist></div>
-          <button class="btn btn-gold btn-block" type="submit">Save product</button>
-          <% if (isNew) { %><button class="btn btn-ghost btn-block mt-1" type="submit" name="save_and_new" value="1">Save &amp; add another</button><% } %>
-        </div>
-      </section>
-
-      <section class="card form-section">
         <h2><%- icon('plus', 18) %> Photos</h2>
         <div class="card-body">
           <% if (product.images && product.images.length) { %>
@@ -93,6 +81,18 @@
           <div class="previews" id="img-preview"></div>
         </div>
       </section>
+      <section class="card form-section">
+        <h2>Publishing</h2>
+        <div class="card-body">
+          <label class="check"><input type="checkbox" name="active" value="1" <%= product.active ? 'checked' : '' %>> Visible on the website</label>
+          <label class="check mt-1"><input type="checkbox" name="featured" value="1" <%= product.featured ? 'checked' : '' %>> Featured on the home page</label>
+          <div class="field mt-2"><label for="unit">Selling unit</label><input id="unit" name="unit" type="text" list="units" value="<%= v('unit') || 'piece' %>">
+            <datalist id="units"><% ['piece', 'set', 'unit', 'sqm', 'sheet', 'ton', 'meter', 'carton', 'pallet', 'container', 'kg', 'box', 'roll', 'bag'].forEach(u => { %><option value="<%= u %>"><% }) %></datalist></div>
+          <button class="btn btn-gold btn-block" type="submit">Save product</button>
+          <% if (isNew) { %><button class="btn btn-ghost btn-block mt-1" type="submit" name="save_and_new" value="1">Save &amp; add another</button><% } %>
+        </div>
+      </section>
+
     </div>
   </div>
 </form>
