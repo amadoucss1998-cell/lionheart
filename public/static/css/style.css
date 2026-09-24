@@ -117,7 +117,8 @@ textarea { min-height: 96px; resize: vertical; }
 .card-body { padding: 20px; }
 .card h2 { font-size: 1.15rem; }
 
-.page { padding: 28px 0 56px; }
+/* Only vertical padding here: the side gutters come from .container. */
+.page { padding-top: 28px; padding-bottom: 56px; }
 .page-head { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
 .page-head h1 { margin: 0; }
 .breadcrumbs { font-size: .85rem; color: var(--muted); margin-bottom: 10px; }
@@ -373,6 +374,8 @@ table.table { width: 100%; border-collapse: collapse; background: #fff; }
 }
 @media (max-width: 760px) {
   body { font-size: 15px; }
+  .container { padding-left: 18px; padding-right: 18px; }
+  .page { padding-top: 20px; padding-bottom: 40px; }
   .topbar .hubs { display: none; }
   .header .container { flex-wrap: wrap; gap: 10px; min-height: 60px; padding-top: 8px; padding-bottom: 10px; }
   .brand img { height: 40px; }
