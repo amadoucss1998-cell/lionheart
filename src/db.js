@@ -144,6 +144,16 @@ CREATE TABLE IF NOT EXISTS sourcing_requests (
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS notification_log (
+  id INTEGER PRIMARY KEY,
+  channel TEXT NOT NULL,
+  recipient TEXT,
+  subject TEXT,
+  status TEXT NOT NULL,
+  error TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,
   value TEXT
@@ -165,6 +175,9 @@ const DEFAULT_SETTINGS = {
   address_china: 'Guangzhou, China',
   address_dubai: 'Dubai, United Arab Emirates',
   website: 'https://lionheartgroup.info',
+  alert_emails: 'lionheartgroupinfo@gmail.com',
+  alert_whatsapp_numbers: '231888979704',
+  alert_on_requests: 'yes',
   payment_instructions:
     'Once you accept our quotation, we will send you an invoice with bank transfer details. ' +
     'Sourcing orders normally require a deposit before we purchase from the factory; the balance is due before shipping.',

@@ -15,4 +15,47 @@
   <% }) %>
   <button class="btn btn-gold" type="submit">Save settings</button>
 </div></form>
+
+<section class="card mt-3" id="alerts" style="max-width:820px"><div class="card-body">
+  <h2><%- icon('chat', 20) %> New order alerts</h2>
+  <p class="muted">Your team gets a message the moment a customer places an order<%= values.alert_on_requests === 'no' ? '' : ' or sends a sourcing request' %>, with the customer, destination, items and a link to the order.</p>
+
+  <div class="grid-2" style="gap:16px">
+    <div class="card"><div class="card-body">
+      <div class="row"><strong>Email</strong><div class="spacer"></div><% if (alerts.emailConfigured) { %><span class="tag tag-stock">Connected</span><% } else { %><span class="tag tag-muted">Not set up</span><% } %></div>
+      <% if (!alerts.emailConfigured) { %><p class="small muted mt-1 mb-0">Set <code>SMTP_HOST</code>, <code>SMTP_PORT</code>, <code>SMTP_USER</code>, <code>SMTP_PASS</code> and <code>MAIL_FROM</code> on the server and restart. For Gmail use <code>smtp.gmail.com</code>, port 465 and a Google <em>App password</em>.</p><% } %>
+    </div></div>
+    <div class="card"><div class="card-body">
+      <div class="row"><strong>WhatsApp</strong><div class="spacer"></div><% if (alerts.whatsappProvider) { %><span class="tag tag-stock">Connected · <%= alerts.whatsappProvider %></span><% } else { %><span class="tag tag-muted"><%= alerts.whatsappRequested ? 'Incomplete setup' : 'Not set up' %></span><% } %></div>
+      <% if (!alerts.whatsappProvider) { %><p class="small muted mt-1 mb-0">Set <code>WHATSAPP_PROVIDER</code> to <code>callmebot</code> (free, quickest), <code>cloud</code> (Meta WhatsApp Business) or <code>twilio</code>, plus that provider's keys, then restart. The README has step-by-step instructions.</p><% } %>
+      <% if (alerts.whatsappProvider === 'callmebot') { %><p class="small muted mt-1 mb-0">CallMeBot sends to the numbers in <code>CALLMEBOT_RECIPIENTS</code>: <%= alerts.whatsappRecipients.map(n => '+' + n).join(', ') || 'none' %>.</p><% } %>
+    </div></div>
+  </div>
+
+  <form method="post" action="/admin/settings" class="mt-2">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <input type="hidden" name="alerts_form" value="1">
+    <div class="field"><label for="alert_emails">Send email alerts to</label><input id="alert_emails" name="alert_emails" type="text" value="<%= values.alert_emails || '' %>" placeholder="sales@…, manager@…"><div class="hint">One or more addresses, separated by commas.</div></div>
+    <div class="field"><label for="alert_whatsapp_numbers">Send WhatsApp alerts to</label><input id="alert_whatsapp_numbers" name="alert_whatsapp_numbers" type="text" value="<%= values.alert_whatsapp_numbers || '' %>" placeholder="231888979704, 971500000000"><div class="hint">International numbers with country code, separated by commas. Used by the Cloud API and Twilio. CallMeBot uses its own list on the server.</div></div>
+    <div class="field"><label for="alert_on_requests">Also alert on sourcing requests</label>
+      <select id="alert_on_requests" name="alert_on_requests" style="max-width:200px"><option value="yes" <%= values.alert_on_requests !== 'no' ? 'selected' : '' %>>Yes</option><option value="no" <%= values.alert_on_requests === 'no' ? 'selected' : '' %>>No, orders only</option></select></div>
+    <div class="row">
+      <button class="btn btn-gold" type="submit">Save alert settings</button>
+      <button class="btn btn-outline" type="submit" form="test-alert">Send a test alert</button>
+    </div>
+  </form>
+  <form id="test-alert" method="post" action="/admin/settings/test-alert"><input type="hidden" name="_csrf" value="<%= csrf %>"></form>
+
+  <h3 class="mt-3">Recent alerts</h3>
+  <% if (!alertLog.length) { %><p class="small muted mb-0">No alerts sent yet.</p><% } else { %>
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>When</th><th>Channel</th><th>To</th><th>Message</th><th>Result</th></tr></thead>
+    <tbody><% alertLog.forEach(l => { %>
+      <tr><td class="small nowrap"><%= new Date(l.created_at + 'Z').toLocaleString('en-GB', { dateStyle: 'short', timeStyle: 'short' }) %></td>
+      <td class="small"><%= l.channel %></td><td class="small"><%= l.recipient %></td><td class="small"><%= l.subject %></td>
+      <td><% if (l.status === 'sent') { %><span class="tag tag-stock">Sent</span><% } else { %><span class="tag" style="background:var(--red-soft);color:var(--red)">Failed</span><div class="small muted"><%= l.error %></div><% } %></td></tr>
+    <% }) %></tbody>
+  </table></div>
+  <% } %>
+</div></section>
 <%- include('_footer') %>

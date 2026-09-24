@@ -4,6 +4,7 @@ const { listProducts, getProduct, modeAvailable, hydrateCart } = require('../cat
 const { upload, withUpload, flash } = require('../middleware');
 const { SHIPPING_METHODS, makeRef, toIntOrNull, parseSpecs } = require('../helpers');
 const { orderForViewer, loadOrderDetail } = require('../orders');
+const notify = require('../notify');
 
 const router = express.Router();
 const PAGE_SIZE = 24;
@@ -11,6 +12,8 @@ const MAX_CART_LINES = 40;
 
 const trim = (v, max = 2000) => String(v || '').trim().slice(0, max);
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Used for links in staff alerts when PUBLIC_URL is not set.
+const siteUrl = (req) => `${req.protocol}://${req.get('host')}`;
 
 router.get('/', (req, res) => {
   const featured = listProducts({ featured: true, limit: 8 }).items;
@@ -168,8 +171,10 @@ router.post('/checkout', (req, res) => {
       'Order placed online.',
       req.user ? req.user.id : null
     );
+    return orderId;
   });
-  placeOrder();
+  const orderId = placeOrder();
+  notify.notifyNewOrder(orderId, siteUrl(req));
 
   req.session.cart = [];
   req.session.guestOrders = [...(req.session.guestOrders || []), ref].slice(-20);
@@ -250,10 +255,11 @@ router.post('/request', ...withUpload(upload.single('image')), (req, res) => {
   if (errors.length) return res.status(400).render('request', { title: 'Request a product', form, errors });
 
   const ref = makeRef('RQ');
-  db.prepare(
+  const { lastInsertRowid: requestId } = db.prepare(
     `INSERT INTO sourcing_requests (ref, user_id, name, email, phone, country, category_id, description, quantity, target_price, image_filename)
      VALUES (@ref, @user_id, @name, @email, @phone, @country, @category_id, @description, @quantity, @target_price, @image)`
   ).run({ ...form, ref, user_id: req.user ? req.user.id : null, image: req.file ? req.file.filename : null });
+  notify.notifyNewRequest(requestId, siteUrl(req));
   res.render('request-sent', { title: 'Request received', ref });
 });
 

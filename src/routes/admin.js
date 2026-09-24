@@ -5,6 +5,7 @@ const { upload, csvUpload, withUpload, flash, requireStaff, requireAdmin, remove
 const { listProducts, getProduct } = require('../catalog');
 const { loadOrderDetail } = require('../orders');
 const h = require('../helpers');
+const notify = require('../notify');
 
 const router = express.Router();
 router.use(requireStaff);
@@ -24,7 +25,9 @@ router.get('/', (req, res) => {
   const byStatus = db.prepare('SELECT status, COUNT(*) AS n FROM orders GROUP BY status').all();
   const recentOrders = db.prepare('SELECT * FROM orders ORDER BY created_at DESC, id DESC LIMIT 8').all();
   const recentRequests = db.prepare('SELECT * FROM sourcing_requests ORDER BY created_at DESC, id DESC LIMIT 5').all();
-  res.render('admin/dashboard', { title: 'Dashboard', stats, byStatus, recentOrders, recentRequests });
+  const alerts = notify.status();
+  const alertsOff = !alerts.emailConfigured && !alerts.whatsappProvider;
+  res.render('admin/dashboard', { title: 'Dashboard', stats, byStatus, recentOrders, recentRequests, alertsOff });
 });
 
 // ---------------- Products ----------------
@@ -525,7 +528,13 @@ router.post('/users/:id/role', requireAdmin, (req, res) => {
 // ---------------- Settings ----------------
 
 router.get('/settings', requireAdmin, (req, res) => {
-  res.render('admin/settings', { title: 'Settings', values: getSettings(), keys: Object.keys(DEFAULT_SETTINGS) });
+  res.render('admin/settings', {
+    title: 'Settings',
+    values: getSettings(),
+    keys: Object.keys(DEFAULT_SETTINGS).filter((k) => !k.startsWith('alert_')),
+    alerts: notify.status(),
+    alertLog: notify.recentLog(),
+  });
 });
 
 router.post('/settings', requireAdmin, (req, res) => {
@@ -533,7 +542,19 @@ router.post('/settings', requireAdmin, (req, res) => {
     if (req.body[key] !== undefined) setSetting(key, trim(req.body[key], 4000));
   }
   flash(req, 'success', 'Settings saved.');
-  res.redirect('/admin/settings');
+  res.redirect(req.body.alerts_form ? '/admin/settings#alerts' : '/admin/settings');
+});
+
+router.post('/settings/test-alert', requireAdmin, async (req, res) => {
+  const { emailConfigured, whatsappProvider } = notify.status();
+  if (!emailConfigured && !whatsappProvider) {
+    flash(req, 'error', 'No alert channel is set up yet. Follow the setup steps below, then restart the server.');
+  } else {
+    await notify.sendTest(`${req.protocol}://${req.get('host')}`);
+    const failed = notify.recentLog(10).filter((l) => l.subject === 'Lionheart test alert' && l.status === 'failed').length;
+    flash(req, failed ? 'error' : 'success', failed ? 'Some test alerts failed. See the log below for the reason.' : 'Test alert sent. Check your inbox and WhatsApp.');
+  }
+  res.redirect('/admin/settings#alerts');
 });
 
 module.exports = router;

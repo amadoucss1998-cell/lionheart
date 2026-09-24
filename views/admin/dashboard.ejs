@@ -1,5 +1,8 @@
 <%- include('_header') %>
 <div class="admin-top"><h1>Dashboard</h1><div class="spacer"></div><a class="btn btn-gold" href="/admin/products/new"><%- icon('plus', 18) %> Add product</a></div>
+<% if (alertsOff && user.role === 'admin') { %>
+  <div class="alert alert-info mt-0"><strong>New order alerts are off.</strong> Set up email or WhatsApp alerts so your team knows the moment a customer orders. <a href="/admin/settings#alerts">Set up alerts →</a></div>
+<% } %>
 <div class="stats">
   <a class="card stat" href="/admin/orders?status=received"><div class="n"><%= stats.ordersNew %></div><div class="l">New orders to quote</div></a>
   <a class="card stat" href="/admin/orders"><div class="n"><%= stats.ordersOpen %></div><div class="l">Open orders</div></a>

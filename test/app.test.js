@@ -13,9 +13,10 @@ process.env.SESSION_SECRET = 'test-secret';
 const { ensureAdmin, seedCatalog } = require('../src/seed');
 const { createApp } = require('../src/app');
 const { db } = require('../src/db');
+const { makeBrowser } = require('./helpers');
 
 let server;
-let base;
+let browser;
 
 before(async () => {
   const log = console.log;
@@ -25,7 +26,7 @@ before(async () => {
   console.log = log;
   server = createApp().listen(0);
   await new Promise((r) => server.once('listening', r));
-  base = `http://127.0.0.1:${server.address().port}`;
+  browser = makeBrowser(`http://127.0.0.1:${server.address().port}`);
 });
 
 after(() => {
@@ -33,37 +34,6 @@ after(() => {
   db.close();
   fs.rmSync(tmp, { recursive: true, force: true });
 });
-
-// Tiny cookie-keeping browser.
-function browser() {
-  const jar = new Map();
-  async function req(url, opts = {}) {
-    const headers = { ...(opts.headers || {}) };
-    if (jar.size) headers.cookie = [...jar].map(([k, v]) => `${k}=${v}`).join('; ');
-    const res = await fetch(base + url, { ...opts, headers, redirect: 'manual' });
-    for (const c of res.headers.getSetCookie()) {
-      const [pair] = c.split(';');
-      const i = pair.indexOf('=');
-      jar.set(pair.slice(0, i), pair.slice(i + 1));
-    }
-    return res;
-  }
-  async function csrf(url = '/') {
-    const html = await (await req(url)).text();
-    const m = html.match(/name="_csrf" value="([^"]+)"/);
-    assert.ok(m, `no csrf token on ${url}`);
-    return m[1];
-  }
-  async function post(url, data, from) {
-    const token = await csrf(from || url);
-    return req(url, {
-      method: 'POST',
-      headers: { 'content-type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ _csrf: token, ...data }).toString(),
-    });
-  }
-  return { req, csrf, post };
-}
 
 const productBySku = (sku) => db.prepare('SELECT * FROM products WHERE sku = ?').get(sku);
 
