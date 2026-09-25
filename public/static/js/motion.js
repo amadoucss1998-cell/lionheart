@@ -1,4 +1,4 @@
-// Site-wide GSAP motion: entrance, scroll reveals, counters and card hover.
+// Site-wide GSAP motion: entrance, scroll reveals and counters.
 // Content is fully visible without JS; animations only start once GSAP loads.
 (function () {
   var gsap = window.gsap;
@@ -50,23 +50,23 @@
     groups.forEach(function (sel) {
       var els = document.querySelectorAll(sel);
       if (!els.length) return;
-      gsap.set(els, { y: 28, opacity: 0 });
+      gsap.set(els, { y: 18, opacity: 0 });
       window.ScrollTrigger.batch(els, {
         start: 'top 92%',
         once: true,
         onEnter: function (batch) {
-          gsap.to(batch, { y: 0, opacity: 1, duration: 0.55, stagger: 0.05, ease: 'power3.out', overwrite: true, clearProps: 'transform' });
+          gsap.to(batch, { y: 0, opacity: 1, duration: 0.7, stagger: 0.06, ease: 'power2.out', overwrite: true, clearProps: 'transform' });
         },
       });
     });
 
-    // Section titles slide in with a gold underline
+    // Section titles rise in gently
     document.querySelectorAll('.section-head h2').forEach(function (h) {
-      gsap.from(h, { x: -24, opacity: 0, duration: 0.7, ease: 'power3.out', scrollTrigger: { trigger: h, start: 'top 90%', once: true } });
+      gsap.from(h, { y: 14, opacity: 0, duration: 0.8, ease: 'power2.out', scrollTrigger: { trigger: h, start: 'top 90%', once: true } });
     });
 
     document.querySelectorAll('.cta-band').forEach(function (el) {
-      gsap.from(el, { y: 40, opacity: 0, scale: 0.98, duration: 0.9, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 90%', once: true } });
+      gsap.from(el, { y: 24, opacity: 0, duration: 0.9, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 90%', once: true } });
     });
 
     // Route line on the "how it works" steps draws itself
@@ -96,33 +96,6 @@
     var t;
     window.addEventListener('scroll', function () { clearTimeout(t); t = setTimeout(reveal, 250); }, { passive: true });
     setTimeout(reveal, 1500);
-  }
-
-  // 3D tilt on product and category cards (pointer devices only)
-  if (window.matchMedia('(hover: hover)').matches) {
-    document.querySelectorAll('.pcard').forEach(function (card) {
-      gsap.set(card, { transformPerspective: 800 });
-      var rx = gsap.quickTo(card, 'rotationX', { duration: 0.4, ease: 'power2.out' });
-      var ry = gsap.quickTo(card, 'rotationY', { duration: 0.4, ease: 'power2.out' });
-      card.addEventListener('pointermove', function (e) {
-        var r = card.getBoundingClientRect();
-        ry(((e.clientX - r.left) / r.width - 0.5) * 5);
-        rx(-((e.clientY - r.top) / r.height - 0.5) * 5);
-      });
-      card.addEventListener('pointerleave', function () { rx(0); ry(0); });
-    });
-
-    // Magnetic primary buttons
-    document.querySelectorAll('.btn-lg').forEach(function (btn) {
-      var mx = gsap.quickTo(btn, 'x', { duration: 0.35, ease: 'power3.out' });
-      var my = gsap.quickTo(btn, 'y', { duration: 0.35, ease: 'power3.out' });
-      btn.addEventListener('pointermove', function (e) {
-        var r = btn.getBoundingClientRect();
-        mx((e.clientX - r.left - r.width / 2) * 0.18);
-        my((e.clientY - r.top - r.height / 2) * 0.25);
-      });
-      btn.addEventListener('pointerleave', function () { mx(0); my(0); });
-    });
   }
 
   // Header shadow once the page scrolls

@@ -1,13 +1,14 @@
 <article class="pcard">
-  <a class="thumb" href="/products/<%= p.slug %>">
-    <% if (p.image) { %><img src="<%= img(p.thumb || p.image) %>" alt="<%= p.name %>" loading="lazy" decoding="async" width="600" height="450"><% } else { %><div class="placeholder"><%- icon(p.category_icon || 'box', 56) %></div><% } %>
+  <a class="thumb" href="/products/<%= p.slug %>" tabindex="-1">
+    <% if (p.image) { %><img src="<%= img(p.thumb || p.image) %>" alt="<%= p.name %>" loading="lazy" decoding="async" width="600" height="450"><% } else { %><div class="placeholder"><%- icon(p.category_icon || 'box', 44) %><span>Photo on request</span></div><% } %>
     <div class="tags">
       <% if (p.stock_available) { %><span class="tag tag-stock">In stock</span><% } %>
       <% if (p.sourcing_available) { %><span class="tag tag-source">From China</span><% } %>
     </div>
+    <span class="pgo" aria-hidden="true"><%- icon('arrow', 18) %></span>
   </a>
   <div class="pbody">
-    <% if (p.category_name) { %><div class="pcat"><%= p.category_name %></div><% } %>
+    <div class="pmeta"><% if (p.category_name) { %><span class="pcat"><%= p.category_name %></span><% } %><% if (p.sku) { %><span class="psku"><%= p.sku %></span><% } %></div>
     <h3><a href="/products/<%= p.slug %>"><%= p.name %></a></h3>
     <div class="prices">
       <% if (p.sourcing_available) { %>

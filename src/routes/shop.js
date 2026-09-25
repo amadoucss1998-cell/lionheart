@@ -25,18 +25,21 @@ router.get('/', async (req, res) => {
   // All home page data in parallel, cached briefly (cleared on admin changes).
   const [featured, latest, countRows, testimonials] = await cached('home', CATALOG_TTL, () =>
     Promise.all([
-      listProducts({ featured: true, limit: 8 }).then((r) => r.items),
+      listProducts({ featured: true, limit: 5 }).then((r) => r.items),
       listProducts({ sort: 'newest', limit: 8 }).then((r) => r.items),
       db.all('SELECT category_id, COUNT(*)::int AS n FROM products WHERE active = 1 GROUP BY category_id'),
       reviews.approvedReviews(6),
     ])
   );
   const counts = Object.fromEntries(countRows.map((r) => [r.category_id, r.n]));
+  // "Newly added" only shows products that are not already featured above.
+  const featuredIds = new Set(featured.map((p) => p.id));
+  const fresh = latest.filter((p) => !featuredIds.has(p.id)).slice(0, 4);
   const totals = {
     products: countRows.reduce((sum, r) => sum + r.n, 0),
     categories: res.locals.categoriesNav.length,
   };
-  res.render('home', { title: null, featured, latest, counts, totals, testimonials, hero3d: true });
+  res.render('home', { title: null, featured, latest: fresh, counts, totals, testimonials, hero3d: true });
 });
 
 router.get('/products', async (req, res) => {

@@ -67,23 +67,31 @@
           <small><%= c.description || `${counts[c.id] || 0} product${(counts[c.id] || 0) === 1 ? '' : 's'}` %></small>
         </a>
       <% }) %>
+      <% if (categoriesNav.length % 2) { %>
+        <a class="cat-tile cat-tile-request" href="/request">
+          <span class="ci"><%- icon('plus', 20) %></span>
+          <strong>Something else?</strong>
+          <span class="go"><span>On request</span><%- icon('arrow', 18) %></span>
+          <small>Most of what we source is not listed. Tell us what you need.</small>
+        </a>
+      <% } %>
     </div>
   </section>
 
   <% if (featured.length) { %>
   <section class="section">
     <div class="section-head">
-      <div><span class="kicker">Selected for you</span><h2>Featured products</h2></div>
+      <div><span class="kicker">Selected for you</span><h2>Featured <em>products</em></h2></div>
       <div class="spacer"></div>
       <a href="/products">See the full range <%- icon('arrow', 16) %></a>
     </div>
-    <div class="product-grid"><% featured.forEach(p => { %><%- include('partials/product-card', { p }) %><% }) %></div>
+    <div class="product-grid<%= featured.length === 5 ? ' bento' : '' %>"><% featured.forEach(p => { %><%- include('partials/product-card', { p }) %><% }) %></div>
   </section>
   <% } %>
 
   <section class="section">
     <div class="section-head">
-      <div><span class="kicker">Door to door</span><h2>Everything between the factory and your site</h2></div>
+      <div><span class="kicker">Door to door</span><h2>Everything between the factory <em>and your site</em></h2></div>
       <div class="spacer"></div>
       <p>Clearing &amp; forwarding is our core business. We take care of each step so you deal with one team, not ten.</p>
     </div>
@@ -99,7 +107,7 @@
 
   <section class="section">
     <div class="section-head">
-      <div><span class="kicker">How ordering works</span><h2>From cart to container in four steps</h2></div>
+      <div><span class="kicker">How ordering works</span><h2>From cart to container in <em>four steps</em></h2></div>
       <div class="spacer"></div>
       <a href="/how-it-works">Learn more <%- icon('arrow', 16) %></a>
     </div>
@@ -114,7 +122,7 @@
   <% if (latest.length) { %>
   <section class="section">
     <div class="section-head">
-      <div><span class="kicker">Just arrived</span><h2>Newly added</h2></div>
+      <div><span class="kicker">Just arrived</span><h2>Newly <em>added</em></h2></div>
       <div class="spacer"></div>
       <a href="/products?sort=newest">See all <%- icon('arrow', 16) %></a>
     </div>
@@ -151,7 +159,7 @@
     <div class="faq-layout">
       <div>
         <span class="kicker">Questions</span>
-        <h2>Before you order</h2>
+        <h2>Before you <em>order</em></h2>
         <p class="muted">Anything else? Our team answers on WhatsApp and email.</p>
         <% if (settings.whatsapp) { %><a class="btn btn-ghost mt-2" href="https://wa.me/<%= settings.whatsapp.replace(/\D/g, '') %>" target="_blank" rel="noopener"><%- icon('chat', 18) %> Ask us on WhatsApp</a><% } %>
       </div>
