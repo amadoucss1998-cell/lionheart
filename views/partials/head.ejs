@@ -6,21 +6,34 @@
   <meta name="theme-color" content="#0d1824">
   <title><%= locals.title ? `${title} | Lionheart Trade` : `${settings.company_name} | China Sourcing, Cargo & Trade` %></title>
 <% const pageTitle = locals.title ? `${title} | Lionheart Trade` : `${settings.company_name} | China Sourcing, Cargo & Trade`;
-   const pageDescription = locals.description || `${settings.tagline} Electronics, machinery, heavy equipment, vehicles, furniture, building materials, tiles, sanitary ware, Decra & zinc roofing, doors and more, shipped from China and Dubai.`;
+   // Link previews (WhatsApp, Facebook, X, LinkedIn…): company name, a short description and the logo.
+   const shareTitle = locals.title ? pageTitle : settings.company_name;
+   const pageDescription = locals.description || `${settings.tagline} Machinery, vehicles, building materials, tiles, solar and more, shipped from China and Dubai to Liberia and Guinea.`;
    const base = locals.siteUrl || '';
    const pageUrl = base + (locals.path || '/');
-   const shareImage = locals.shareImage ? (/^https?:/.test(locals.shareImage) ? locals.shareImage : base + locals.shareImage) : base + '/static/img/og.jpg'; %>
+   const ownImage = Boolean(locals.shareImage);
+   const shareImage = ownImage ? (/^https?:/.test(locals.shareImage) ? locals.shareImage : base + locals.shareImage) : base + asset('/static/img/og-logo.jpg'); %>
   <meta name="description" content="<%= pageDescription %>">
   <link rel="canonical" href="<%= pageUrl %>">
   <% if (locals.noindex) { %><meta name="robots" content="noindex, nofollow"><% } %>
   <meta property="og:type" content="<%= locals.product ? 'product' : 'website' %>">
-  <meta property="og:site_name" content="Lionheart Trade">
-  <meta property="og:title" content="<%= pageTitle %>">
+  <meta property="og:site_name" content="<%= settings.company_name %>">
+  <meta property="og:locale" content="<%= locals.lang === 'fr' ? 'fr_FR' : 'en_US' %>">
+  <meta property="og:locale:alternate" content="<%= locals.lang === 'fr' ? 'en_US' : 'fr_FR' %>">
+  <meta property="og:title" content="<%= shareTitle %>">
   <meta property="og:description" content="<%= pageDescription %>">
   <meta property="og:url" content="<%= pageUrl %>">
   <meta property="og:image" content="<%= shareImage %>">
-  <meta property="og:image:alt" content="<%= pageTitle %>">
-  <meta name="twitter:card" content="summary_large_image">
+  <% if (/^https:/.test(shareImage)) { %><meta property="og:image:secure_url" content="<%= shareImage %>"><% } %>
+  <% if (!ownImage) { %><meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="1200"><% } %>
+  <meta property="og:image:alt" content="<%= settings.company_name %>">
+  <meta name="twitter:card" content="<%= ownImage ? 'summary_large_image' : 'summary' %>">
+  <meta name="twitter:title" content="<%= shareTitle %>">
+  <meta name="twitter:description" content="<%= pageDescription %>">
+  <meta name="twitter:image" content="<%= shareImage %>">
+  <link rel="image_src" href="<%= shareImage %>">
   <link rel="icon" href="/static/img/favicon.png">
   <link rel="apple-touch-icon" href="/static/img/apple-touch-icon.png">
   <link rel="manifest" href="/manifest.webmanifest">

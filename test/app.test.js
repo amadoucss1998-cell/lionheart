@@ -217,3 +217,16 @@ test('open redirect via next= is blocked', async () => {
   const res = await b.post('/login', { email: 'admin@test.local', password: 'admin-pass-123', next: '//evil.example' }, '/login');
   assert.strictEqual(res.headers.get('location'), '/admin');
 });
+
+test('shared links show the company name, a description and the logo', async () => {
+  const html = await (await browser().req('/')).text();
+  assert.match(html, /<meta property="og:site_name" content="Lionheart Group of Companies">/);
+  assert.match(html, /<meta property="og:title" content="Lionheart Group of Companies">/);
+  assert.match(html, /<meta property="og:description" content="[^"]{60,}">/);
+  assert.match(html, /<meta property="og:image" content="http[^"]+\/static\/img\/og-logo\.jpg\?v=[^"]+">/);
+  assert.match(html, /<meta property="og:image:width" content="1200">/);
+  assert.match(html, /<meta name="twitter:image" content="[^"]+og-logo\.jpg/);
+  const img = await browser().req('/static/img/og-logo.jpg');
+  assert.strictEqual(img.status, 200);
+  assert.match(img.headers.get('content-type'), /image\/jpeg/);
+});

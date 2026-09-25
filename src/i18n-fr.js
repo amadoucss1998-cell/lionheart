@@ -79,6 +79,8 @@ const FR = {
   'Source anything from China. Delivered to your door. Electronics, machinery, heavy equipment, vehicles, furniture, building materials, tiles, sanitary ware, Decra & zinc roofing, doors and more, shipped from China and Dubai.':
     'Achetez tout en Chine. Livré à votre porte. Électronique, machines, engins lourds, véhicules, mobilier, matériaux de construction, carrelage, sanitaires, toitures Decra et zinc, portes et plus encore, expédiés depuis la Chine et Dubaï.',
   'Guangzhou, China': 'Guangzhou, Chine',
+  'Source anything from China. Delivered to your door. Machinery, vehicles, building materials, tiles, solar and more, shipped from China and Dubai to Liberia and Guinea.':
+    'Achetez tout en Chine. Livré à votre porte. Machines, véhicules, matériaux de construction, carrelage, solaire et plus encore, expédiés de Chine et de Dubaï vers le Liberia et la Guinée.',
   'Dubai, United Arab Emirates': 'Dubaï, Émirats arabes unis',
   'Center and Carey Street, Monrovia, Liberia': 'Center and Carey Street, Monrovia, Liberia',
   'Kipé, Conakry, Guinea': 'Kipé, Conakry, Guinée',
