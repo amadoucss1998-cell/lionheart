@@ -66,9 +66,9 @@
 
       <div class="row mt-2">
         <% if (settings.whatsapp) { %>
-          <a class="btn btn-whatsapp btn-sm" target="_blank" rel="noopener" href="https://wa.me/<%= settings.whatsapp.replace(/\D/g, '') %>?text=<%= encodeURIComponent(`Hello Lionheart, I'm interested in: ${product.name}${product.sku ? ' (' + product.sku + ')' : ''}`) %>"><%- icon('chat', 16) %> Ask on WhatsApp</a>
+          <a class="btn btn-whatsapp btn-sm" target="_blank" rel="noopener" href="https://wa.me/<%= settings.whatsapp.replace(/\D/g, '') %>?text=<%= encodeURIComponent(t(`Hello Lionheart, I'm interested in: ${product.name}${product.sku ? ' (' + product.sku + ')' : ''}`)) %>"><%- icon('chat', 16) %> Ask on WhatsApp</a>
         <% } %>
-        <a class="btn btn-ghost btn-sm" href="/request?q=<%= encodeURIComponent('Similar to: ' + product.name) %>">Need a different spec?</a>
+        <a class="btn btn-ghost btn-sm" href="/request?q=<%= encodeURIComponent(t('Similar to: {name}').replace('{name}', product.name)) %>">Need a different spec?</a>
         <% if (user && user.role !== 'customer') { %><a class="btn btn-ghost btn-sm" href="/admin/products/<%= product.id %>">Edit product</a><% } %>
       </div>
     </div>

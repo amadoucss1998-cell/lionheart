@@ -118,10 +118,10 @@ function init() {
     monrovia: [6.3, -10.8],
     lagos: [6.52, 3.38],
     accra: [5.6, -0.19],
-    freetown: [8.48, -13.23],
+    conakry: [9.64, -13.62],
     mombasa: [-4.04, 39.67],
   };
-  const MAIN = ['guangzhou', 'dubai', 'monrovia'];
+  const MAIN = ['guangzhou', 'dubai', 'monrovia', 'conakry'];
   const ROUTES = [
     ['guangzhou', 'dubai', 1],
     ['dubai', 'monrovia', 1],
@@ -130,7 +130,8 @@ function init() {
     ['dubai', 'lagos', 0.5],
     ['dubai', 'accra', 0.5],
     ['guangzhou', 'mombasa', 0.5],
-    ['dubai', 'freetown', 0.45],
+    ['dubai', 'conakry', 1],
+    ['guangzhou', 'conakry', 0.55],
   ];
 
   const markers = [];

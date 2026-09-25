@@ -1,10 +1,11 @@
 <%- include('partials/header') %>
 <div class="container page">
   <h1>Contact us</h1>
-  <div class="grid-3" style="gap:16px">
+  <div class="grid-4">
     <div class="card"><div class="card-body"><h3><%- icon('factory') %> China</h3><p class="muted mb-0"><%= settings.address_china %></p></div></div>
     <div class="card"><div class="card-body"><h3><%- icon('warehouse') %> Dubai</h3><p class="muted mb-0"><%= settings.address_dubai %></p></div></div>
     <div class="card"><div class="card-body"><h3><%- icon('globe') %> Liberia (HQ)</h3><p class="muted mb-0"><%= settings.address_liberia %></p></div></div>
+    <% if (settings.address_guinea) { %><div class="card"><div class="card-body"><h3><%- icon('globe') %> Guinea</h3><p class="muted mb-0"><%= settings.address_guinea %></p></div></div><% } %>
   </div>
   <div class="card mt-2"><div class="card-body row">
     <div><strong>Phone:</strong> <a href="tel:<%= settings.phone %>"><%= settings.phone %></a><br><strong>Email:</strong> <a href="mailto:<%= settings.email %>"><%= settings.email %></a></div>

@@ -31,7 +31,7 @@
         <input type="hidden" name="_csrf" value="<%= csrf %>">
         <button class="btn btn-gold btn-lg" type="submit"><%- icon('check') %> Accept quotation</button>
       </form>
-      <% if (settings.whatsapp) { %><a class="btn btn-whatsapp btn-lg" target="_blank" rel="noopener" href="https://wa.me/<%= settings.whatsapp.replace(/\D/g, '') %>?text=<%= encodeURIComponent(`Hello Lionheart, I have a question about my quotation for order ${order.ref}.`) %>"><%- icon('chat') %> Discuss</a><% } %>
+      <% if (settings.whatsapp) { %><a class="btn btn-whatsapp btn-lg" target="_blank" rel="noopener" href="https://wa.me/<%= settings.whatsapp.replace(/\D/g, '') %>?text=<%= encodeURIComponent(t(`Hello Lionheart, I have a question about my quotation for order ${order.ref}.`)) %>"><%- icon('chat') %> Discuss</a><% } %>
     </div>
   </div>
   <% } else if (order.customer_message) { %>

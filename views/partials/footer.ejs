@@ -5,7 +5,7 @@
       <div>
         <img src="/static/img/logo-white.png" alt="Lionheart" width="76" height="56">
         <p><%= settings.tagline %></p>
-        <p class="small">Clearing &amp; forwarding · Procurement &amp; logistics · General trading. Offices in China, Dubai and Liberia.</p>
+        <p class="small">Clearing &amp; forwarding · Procurement &amp; logistics · General trading. Offices in China, Dubai, Liberia and Guinea.</p>
       </div>
       <div>
         <h4>Shop</h4>
@@ -33,6 +33,7 @@
           <li><%= settings.address_china %></li>
           <li><%= settings.address_dubai %></li>
           <li><%= settings.address_liberia %></li>
+          <% if (settings.address_guinea) { %><li><%= settings.address_guinea %></li><% } %>
         </ul>
       </div>
     </div>

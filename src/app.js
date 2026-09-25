@@ -4,6 +4,7 @@ const express = require('express');
 const cookieSession = require('cookie-session');
 const compression = require('compression');
 const { locals, csrfGlobal, assetUrl } = require('./middleware');
+const { i18n } = require('./i18n');
 const { rateLimit } = require('./rate-limit');
 const { db } = require('./db');
 const { bootstrap } = require('./seed');
@@ -101,6 +102,7 @@ function createApp() {
     })
   );
   app.use(locals);
+  app.use(i18n);
 
   // Slow down password guessing, order-number guessing and form spam.
   const MIN = 60 * 1000;

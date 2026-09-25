@@ -24,15 +24,15 @@ const SOURCING_STATUSES = [
 ];
 
 const SHIPPING_METHODS = [
-  { key: 'sea_fcl', label: 'Sea freight – full container (FCL)' },
-  { key: 'sea_lcl', label: 'Sea freight – shared container (LCL)' },
+  { key: 'sea_fcl', label: 'Sea freight, full container (FCL)' },
+  { key: 'sea_lcl', label: 'Sea freight, shared container (LCL)' },
   { key: 'air', label: 'Air freight' },
   { key: 'roro', label: 'RoRo (vehicles & heavy machinery)' },
   { key: 'pickup_dubai', label: 'Pick up at our Dubai warehouse' },
   { key: 'pickup_china', label: 'Pick up at our China warehouse' },
-  { key: 'advise', label: 'Not sure – please advise me' },
+  { key: 'advise', label: 'Not sure, please advise me' },
 ];
-const shippingLabel = (key) => (SHIPPING_METHODS.find((s) => s.key === key) || { label: key || '—' }).label;
+const shippingLabel = (key) => (SHIPPING_METHODS.find((s) => s.key === key) || { label: key || '-' }).label;
 
 const MODES = {
   source: { label: 'Source from China', short: 'China sourcing' },
@@ -61,11 +61,11 @@ async function uniqueSlug(db, table, base, ignoreId) {
 }
 
 // Formats a database timestamp (Date or ISO string) for display.
-function formatDate(v, style = 'datetime') {
+function formatDate(v, style = 'datetime', locale = 'en-GB') {
   if (!v) return '';
   const d = v instanceof Date ? v : new Date(v);
   const opts = style === 'date' ? { dateStyle: 'medium' } : style === 'short' ? { dateStyle: 'short', timeStyle: 'short' } : { dateStyle: 'medium', timeStyle: 'short' };
-  return d.toLocaleString('en-GB', { ...opts, timeZone: 'UTC' }) + (style === 'date' ? '' : ' UTC');
+  return d.toLocaleString(locale, { ...opts, timeZone: 'UTC' }) + (style === 'date' ? '' : ' UTC');
 }
 
 function makeRef(prefix) {

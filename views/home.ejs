@@ -2,8 +2,8 @@
 <section class="hero">
   <div class="container">
     <div class="hero-copy">
-      <div class="eyebrow" data-anim="eyebrow">Guangzhou, Dubai, Monrovia</div>
-      <h1><span class="line-wrap"><span class="line">Sourced in <em>China</em>,</span></span><span class="line-wrap"><span class="line">delivered by Lionheart.</span></span></h1>
+      <div class="eyebrow" data-anim="eyebrow">Guangzhou, Dubai, Monrovia, Conakry</div>
+      <h1><span class="line-wrap"><span class="line"><%- t('Sourced in <em>China</em>,') %></span></span><span class="line-wrap"><span class="line"><%- t('delivered by Lionheart.') %></span></span></h1>
       <p class="lead" data-anim="lead">One partner between you and thousands of Chinese factories. We source, buy, inspect, ship and clear your goods.</p>
       <div class="cta">
         <a class="btn btn-gold btn-lg" href="/products">Browse the catalog <%- icon('arrow', 18, 'arrow') %></a>
@@ -15,7 +15,8 @@
       <ul class="hero-legend">
         <li><span class="code">CAN</span><div><strong>Guangzhou, China</strong><small>Sourcing, purchasing &amp; inspection</small></div></li>
         <li><span class="code">DXB</span><div><strong>Dubai, UAE</strong><small>Ready stock &amp; re-export</small></div></li>
-        <li><span class="code">MLW</span><div><strong>Monrovia, Liberia</strong><small>Clearing, forwarding &amp; delivery</small></div></li>
+        <li><span class="code">MLW</span><div><strong>Monrovia, Liberia</strong><small>Head office, clearing &amp; delivery</small></div></li>
+        <li><span class="code">CKY</span><div><strong>Kipé, Conakry, Guinea</strong><small>Clearing, forwarding &amp; delivery</small></div></li>
       </ul>
     </div>
   </div>
@@ -76,7 +77,7 @@
   <% if (featured.length) { %>
   <section class="section">
     <div class="section-head">
-      <div><h2>Featured <em>products</em></h2></div>
+      <div><h2><%- t('Featured <em>products</em>') %></h2></div>
       <div class="spacer"></div>
       <a href="/products">Browse the catalog <%- icon('arrow', 16) %></a>
     </div>
@@ -86,7 +87,7 @@
 
   <section class="section">
     <div class="section-head">
-      <div><h2>Everything between the factory <em>and your site</em></h2><p class="section-lede">Clearing and forwarding is our core business. You deal with one team, not ten.</p></div>
+      <div><h2><%- t('Everything between the factory <em>and your site</em>') %></h2><p class="section-lede">Clearing and forwarding is our core business. You deal with one team, not ten.</p></div>
     </div>
     <div class="services bento">
       <div class="service"><%- icon('search', 26) %><h3>Sourcing</h3><p>We find and vet manufacturers for the exact specification, quantity and budget you need.</p></div>
@@ -100,7 +101,7 @@
 
   <section class="section">
     <div class="section-head">
-      <div><h2>From cart to container in <em>four steps</em></h2></div>
+      <div><h2><%- t('From cart to container in <em>four steps</em>') %></h2></div>
       <div class="spacer"></div>
       <a href="/how-it-works">Learn more <%- icon('arrow', 16) %></a>
     </div>
@@ -115,7 +116,7 @@
   <% if (latest.length) { %>
   <section class="section">
     <div class="section-head">
-      <div><h2>Newly <em>added</em></h2></div>
+      <div><h2><%- t('Newly <em>added</em>') %></h2></div>
       <div class="spacer"></div>
       <a href="/products?sort=newest">See all <%- icon('arrow', 16) %></a>
     </div>
@@ -151,7 +152,7 @@
   <section class="section faq-section">
     <div class="faq-layout">
       <div>
-        <h2>Before you <em>order</em></h2>
+        <h2><%- t('Before you <em>order</em>') %></h2>
         <p class="muted">Anything else? Our team answers on WhatsApp and email.</p>
         <% if (settings.whatsapp) { %><a class="btn btn-ghost mt-2" href="https://wa.me/<%= settings.whatsapp.replace(/\D/g, '') %>" target="_blank" rel="noopener"><%- icon('chat', 18) %> Ask us on WhatsApp</a><% } %>
       </div>
@@ -168,7 +169,7 @@
   </section>
 
   <div class="cta-band">
-    <div><h2>Need something that's <em>not listed</em>?</h2><p>Send us a photo or a description. Our team in China will find the manufacturer and come back with prices and options.</p></div>
+    <div><h2><%- t("Need something that's <em>not listed</em>?") %></h2><p>Send us a photo or a description. Our team in China will find the manufacturer and come back with prices and options.</p></div>
     <div class="cta-actions">
       <a class="btn btn-gold btn-lg" href="/request">Request a product <%- icon('arrow', 18, 'arrow') %></a>
       <% if (settings.whatsapp) { %><a class="btn btn-ghost btn-lg" href="https://wa.me/<%= settings.whatsapp.replace(/\D/g, '') %>" target="_blank" rel="noopener"><%- icon('chat') %> Ask us on WhatsApp</a><% } %>

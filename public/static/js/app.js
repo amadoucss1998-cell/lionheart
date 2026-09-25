@@ -155,4 +155,12 @@
       });
     });
   });
+
+  // Category menu on phones: hide the right-edge fade once the last link is fully visible.
+  var catRow = document.querySelector('.catnav .container');
+  if (catRow && catRow.lastElementChild && 'IntersectionObserver' in window) {
+    new IntersectionObserver(function (entries) {
+      catRow.parentElement.classList.toggle('at-end', entries[0].intersectionRatio > 0.98);
+    }, { root: catRow, threshold: [0.98, 1] }).observe(catRow.lastElementChild);
+  }
 })();

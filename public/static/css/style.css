@@ -117,6 +117,10 @@ code, .mono { font-family: var(--mono); font-size: .9em; }
 .header-actions a { display: flex; align-items: center; gap: 7px; padding: 9px 12px; border-radius: 999px; color: var(--ink); font-weight: 500; font-size: .9rem; }
 .header-actions a:hover { background: var(--paper-2); color: var(--ink); }
 .cart-link { position: relative; }
+.header-actions .lang-switch { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 999px; padding: 3px; margin: 0 6px; }
+.header-actions .lang-switch a { padding: 4px 9px; font-family: var(--mono); font-size: .72rem; letter-spacing: .06em; color: var(--muted); border-radius: 999px; }
+.header-actions .lang-switch a:hover { background: var(--paper-2); color: var(--ink); }
+.header-actions .lang-switch a.active { background: var(--ink); color: #fff; }
 .badge-count { background: var(--brass); color: #fff; font-size: .7rem; font-weight: 700; border-radius: 999px; min-width: 20px; height: 20px; display: inline-grid; place-items: center; padding: 0 6px; font-family: var(--mono); }
 
 /* Category menu: text links on paper, wraps on desktop */
@@ -164,6 +168,7 @@ textarea { min-height: 100px; resize: vertical; }
 .check input { margin-top: 5px; accent-color: var(--brass); }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
 .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 18px; }
+.grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
 
 /* ---------- Alerts ---------- */
 .alert { padding: 13px 18px; border-radius: var(--radius-sm); margin: 18px 0; border: 1px solid; font-size: .94rem; }
@@ -541,8 +546,11 @@ table.table { width: 100%; border-collapse: collapse; background: var(--card); }
   .header-actions .label { display: none; }
   /* Phones: one swipeable menu row, with a fade on the right showing there is more. */
   .catnav { position: relative; }
-  .catnav .container { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-right: 40px; }
-  .catnav::after { content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 44px; pointer-events: none; background: linear-gradient(90deg, rgba(255, 255, 255, 0), var(--paper)); }
+  .catnav .container { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  /* Real spacer after the last link: Safari ignores end padding in scrolling flex rows. */
+  .catnav .container::after { content: ""; flex: 0 0 36px; }
+  .catnav::after { content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 44px; pointer-events: none; background: linear-gradient(90deg, rgba(255, 255, 255, 0), var(--paper)); transition: opacity .25s; }
+  .catnav.at-end::after { opacity: 0; }
   .hero h1 { font-size: clamp(2.4rem, 11vw, 3.2rem); }
             .hero .cta .btn { flex: 1 1 auto; }
   .two-ways { grid-template-columns: 1fr; margin-top: 28px; }

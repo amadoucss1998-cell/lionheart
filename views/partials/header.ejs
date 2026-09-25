@@ -2,7 +2,7 @@
 <body>
 <div class="topbar">
   <div class="container">
-    <span>China sourcing, Dubai stock, delivery to Liberia</span>
+    <span>China sourcing, Dubai stock, delivery to Liberia and Guinea</span>
     <div class="spacer"></div>
     <a href="tel:<%= settings.phone %>"><%= settings.phone %></a>
     <a href="mailto:<%= settings.email %>"><%= settings.email %></a>
@@ -23,6 +23,7 @@
       <% } else { %>
         <a href="/login"><%- icon('user') %><span class="label">Sign in</span></a>
       <% } %>
+      <span class="lang-switch" role="group" aria-label="Language"><% ['en', 'fr'].forEach(code => { %><a href="<%= langUrl(code) %>" hreflang="<%= code %>" lang="<%= code %>" class="<%= lang === code ? 'active' : '' %>"<%- lang === code ? ' aria-current="true"' : '' %>><%= code.toUpperCase() %></a><% }) %></span>
       <a class="cart-link" href="/cart"><%- icon('cart') %><span class="label">Cart</span><% if (cartCount) { %><span class="badge-count"><%= cartCount %></span><% } %></a>
     </nav>
   </div>

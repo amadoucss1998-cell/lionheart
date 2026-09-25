@@ -335,6 +335,7 @@ const DEFAULT_SETTINGS = {
   phone: '+231888979704',
   whatsapp: '231888979704',
   address_liberia: 'Center and Carey Street, Monrovia, Liberia',
+  address_guinea: 'Kipé, Conakry, Guinea',
   address_china: 'Guangzhou, China',
   address_dubai: 'Dubai, United Arab Emirates',
   website: 'https://lionheartgroup.info',
