@@ -143,33 +143,70 @@ async function seedCatalog() {
     }
     if (await tx.get('SELECT 1 AS ok FROM products LIMIT 1')) return;
     const catIds = new Map((await tx.all('SELECT id, name FROM categories')).map((c) => [c.name, c.id]));
-    for (const [cat, name, sku, short, unit, moq, chinaPrice, lead, stockPrice, stockQty, location, featured, specs] of sampleProducts()) {
-      await tx.run(
-        `INSERT INTO products (sku, name, slug, category_id, short_description, description, specs, unit, moq,
-          sourcing_available, china_price, china_lead_days, stock_available, stock_price, stock_qty, stock_location, featured)
-         VALUES (@sku, @name, @slug, @category_id, @short, @description, @specs, @unit, @moq, 1, @china_price, @lead, @stock_available, @stock_price, @stock_qty, @stock_location, @featured)`,
-        {
-          sku,
-          name,
-          slug: await uniqueSlug(tx, 'products', name),
-          category_id: catIds.get(cat) || null,
-          short,
-          description:
-            `${short}. We source this product directly from verified manufacturers in China, inspect it at our warehouse ` +
-            'and ship it to your port or door. Custom specifications, colours and branding are available on request.',
-          specs,
-          unit,
-          moq,
-          china_price: chinaPrice,
-          lead,
-          stock_available: stockPrice !== null || location === 'Dubai' ? 1 : 0,
-          stock_price: stockPrice,
-          stock_qty: stockQty,
-          stock_location: location ? `${location} warehouse` : '',
-          featured,
-        }
-      );
+    for (const row of sampleProducts()) await insertSample(tx, catIds, row);
+  });
+}
+
+async function insertSample(tx, catIds, [cat, name, sku, short, unit, moq, chinaPrice, lead, stockPrice, stockQty, location, featured, specs]) {
+  await tx.run(
+    `INSERT INTO products (sku, name, slug, category_id, short_description, description, specs, unit, moq,
+      sourcing_available, china_price, china_lead_days, stock_available, stock_price, stock_qty, stock_location, featured)
+     VALUES (@sku, @name, @slug, @category_id, @short, @description, @specs, @unit, @moq, 1, @china_price, @lead, @stock_available, @stock_price, @stock_qty, @stock_location, @featured)`,
+    {
+      sku,
+      name,
+      slug: await uniqueSlug(tx, 'products', name),
+      category_id: catIds.get(cat) || null,
+      short,
+      description:
+        `${short}. We source this product directly from verified manufacturers in China, inspect it at our warehouse ` +
+        'and ship it to your port or door. Custom specifications, colours and branding are available on request.',
+      specs,
+      unit,
+      moq,
+      china_price: chinaPrice,
+      lead,
+      stock_available: stockPrice !== null || location === 'Dubai' ? 1 : 0,
+      stock_price: stockPrice,
+      stock_qty: stockQty,
+      stock_location: location ? `${location} warehouse` : '',
+      featured,
     }
+  );
+}
+
+// Sample products whose photo arrives in a later deploy are added to an
+// existing catalog once. Each SKU is offered only one time (tracked in
+// settings), so a sample product that staff delete does not come back.
+async function addSamplesWithPhotos() {
+  if (process.env.SEED_DEMO === 'all') return;
+  const ready = PRODUCTS.filter((p) => stockPhotoFor(p[2]));
+  if (!ready.length) return;
+  await db.transaction(async (tx) => {
+    await tx.run('SELECT pg_advisory_xact_lock(727279)');
+    const row = await tx.get("SELECT value FROM settings WHERE key = 'sample_skus_offered'");
+    let offered = [];
+    try {
+      offered = JSON.parse(row && row.value) || [];
+    } catch {
+      offered = [];
+    }
+    if (!Array.isArray(offered)) offered = [];
+    const todo = ready.filter((p) => !offered.includes(p[2]));
+    if (!todo.length) return;
+    const existing = new Set((await tx.all('SELECT sku FROM products WHERE sku IS NOT NULL')).map((r) => r.sku));
+    const catIds = new Map((await tx.all('SELECT id, name FROM categories')).map((c) => [c.name, c.id]));
+    let added = 0;
+    for (const p of todo) {
+      if (existing.has(p[2])) continue;
+      await insertSample(tx, catIds, p);
+      added += 1;
+    }
+    await tx.run(
+      "INSERT INTO settings (key, value) VALUES ('sample_skus_offered', ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value",
+      [JSON.stringify([...offered, ...todo.map((p) => p[2])].sort())]
+    );
+    if (added) console.log(`Added ${added} sample product(s) that now have photos.`);
   });
 }
 
@@ -245,6 +282,7 @@ function bootstrap() {
       if (process.env.SEED_DEMO !== 'false') {
         await seedCatalog();
         await removeSamplesWithoutPhotos();
+        await addSamplesWithPhotos();
         await attachStockPhotos();
       }
     })().catch((err) => {
@@ -255,7 +293,7 @@ function bootstrap() {
   return bootPromise;
 }
 
-module.exports = { ensureAdmin, seedCatalog, attachStockPhotos, removeSamplesWithoutPhotos, bootstrap, PRODUCTS, PHOTO_SKUS };
+module.exports = { ensureAdmin, seedCatalog, attachStockPhotos, removeSamplesWithoutPhotos, addSamplesWithPhotos, bootstrap, PRODUCTS, PHOTO_SKUS };
 
 if (require.main === module) {
   bootstrap()
