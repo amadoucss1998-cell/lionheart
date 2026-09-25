@@ -1,7 +1,7 @@
 <%- include('partials/header') %>
 <div class="container page">
   <% if (placed) { %>
-    <div class="alert alert-success"><strong>Thank you! Your order <%= order.ref %> has been received.</strong><br>Our team will check prices, availability and shipping, then send your quotation, usually within 24–48 hours. Save your order number to track it.</div>
+    <div class="alert alert-success"><strong>Thank you! Your order <%= order.ref %> has been received.</strong><br>Our team will check prices, availability and shipping, then send your quotation, usually within 24 to 48 hours. Save your order number to track it.</div>
   <% } %>
   <div class="page-head">
     <div><div class="breadcrumbs"><a href="<%= user ? '/account' : '/track' %>"><%= user ? 'My account' : 'Track order' %></a> / Order</div>
@@ -54,7 +54,7 @@
             <td><span class="tag tag-<%= i.mode %>"><%= h.MODES[i.mode].short %></span></td>
             <td class="right nowrap"><%= i.qty %> <%= i.unit %></td>
             <td class="right nowrap"><%= i.unit_price !== null ? fmt(i.unit_price) : 'Pending' %></td>
-            <td class="right nowrap"><%= i.unit_price !== null ? fmt(i.unit_price * i.qty) : '—' %></td>
+            <td class="right nowrap"><%= i.unit_price !== null ? fmt(i.unit_price * i.qty) : '-' %></td>
           </tr>
         <% }) %>
         </tbody>

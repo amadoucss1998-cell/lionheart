@@ -8,12 +8,8 @@ const root = path.join(__dirname, '..');
 const copies = [
   ['node_modules/gsap/dist/gsap.min.js', 'public/vendor/gsap/gsap.min.js'],
   ['node_modules/gsap/dist/ScrollTrigger.min.js', 'public/vendor/gsap/ScrollTrigger.min.js'],
-  ['node_modules/@fontsource-variable/fraunces/files/fraunces-latin-full-normal.woff2', 'public/vendor/fonts/fraunces-latin-full-normal.woff2'],
-  ['node_modules/@fontsource-variable/fraunces/files/fraunces-latin-full-italic.woff2', 'public/vendor/fonts/fraunces-latin-full-italic.woff2'],
-  ['node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-400-normal.woff2', 'public/vendor/fonts/instrument-sans-latin-400-normal.woff2'],
-  ['node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-500-normal.woff2', 'public/vendor/fonts/instrument-sans-latin-500-normal.woff2'],
-  ['node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-600-normal.woff2', 'public/vendor/fonts/instrument-sans-latin-600-normal.woff2'],
-  ['node_modules/@fontsource/instrument-sans/files/instrument-sans-latin-700-normal.woff2', 'public/vendor/fonts/instrument-sans-latin-700-normal.woff2'],
+  ['node_modules/@fontsource-variable/schibsted-grotesk/files/schibsted-grotesk-latin-wght-normal.woff2', 'public/vendor/fonts/schibsted-grotesk-latin-wght-normal.woff2'],
+  ['node_modules/@fontsource-variable/schibsted-grotesk/files/schibsted-grotesk-latin-wght-italic.woff2', 'public/vendor/fonts/schibsted-grotesk-latin-wght-italic.woff2'],
   ['node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2', 'public/vendor/fonts/jetbrains-mono-latin-400-normal.woff2'],
   ['node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-500-normal.woff2', 'public/vendor/fonts/jetbrains-mono-latin-500-normal.woff2'],
 ];

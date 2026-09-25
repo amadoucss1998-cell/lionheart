@@ -31,12 +31,10 @@
       .from('.hero h1 .line', { yPercent: 110, opacity: 0, duration: 0.9, stagger: 0.12 }, '-=0.3')
       .from('.hero [data-anim="lead"]', { y: 20, opacity: 0, duration: 0.7 }, '-=0.5')
       .from('.hero .cta > *', { y: 16, opacity: 0, duration: 0.5, stagger: 0.08 }, '-=0.4')
-      .from('.hero .hero-stats > *', { y: 16, opacity: 0, duration: 0.5, stagger: 0.08 }, '-=0.3')
       .from('.hero-legend > *', { x: 20, opacity: 0, duration: 0.5, stagger: 0.1 }, 1.2);
 
-    // Subtle parallax as the hero scrolls away
+    // The globe drifts back slightly as the hero scrolls away
     if (window.ScrollTrigger) {
-      gsap.to('.hero-copy', { yPercent: 12, opacity: 0.4, ease: 'none', scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: true } });
       gsap.to('#hero-globe', { yPercent: -8, scale: 0.94, ease: 'none', scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: true } });
     }
   }
@@ -85,24 +83,27 @@
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(refresh);
     window.addEventListener('load', refresh);
     // Safety net: anything still hidden once it is on screen is shown anyway.
-    var reveal = function () {
-      document.querySelectorAll('.two-ways > *, .cat-tile, .pcard, .steps .st, .service, .stats .stat, .buy-option, .grid-3 > .card, .cart-item').forEach(function (el) {
-        var r = el.getBoundingClientRect();
-        if (r.top < window.innerHeight && r.bottom > 0 && getComputedStyle(el).opacity === '0') {
-          gsap.to(el, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out', overwrite: true, clearProps: 'transform' });
-        }
+    if ('IntersectionObserver' in window) {
+      var net = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (!e.isIntersecting) return;
+          net.unobserve(e.target);
+          setTimeout(function () {
+            if (getComputedStyle(e.target).opacity === '0') gsap.to(e.target, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out', overwrite: true, clearProps: 'transform' });
+          }, 900);
+        });
       });
-    };
-    var t;
-    window.addEventListener('scroll', function () { clearTimeout(t); t = setTimeout(reveal, 250); }, { passive: true });
-    setTimeout(reveal, 1500);
+      document.querySelectorAll('.two-ways > *, .cat-tile, .pcard, .steps .st, .service, .stats .stat, .buy-option, .grid-3 > .card, .cart-item').forEach(function (el) { net.observe(el); });
+    }
   }
 
-  // Header shadow once the page scrolls
+  // Header shadow once the page leaves the top (a 1px sentinel, no scroll listener)
   var header = document.querySelector('.header');
-  if (header) {
-    var onScroll = function () { header.classList.toggle('scrolled', window.scrollY > 8); };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
+  if (header && 'IntersectionObserver' in window) {
+    var sentinel = document.createElement('div');
+    sentinel.setAttribute('aria-hidden', 'true');
+    sentinel.style.cssText = 'position:absolute;top:0;left:0;width:1px;height:8px;pointer-events:none';
+    document.body.prepend(sentinel);
+    new IntersectionObserver(function (entries) { header.classList.toggle('scrolled', !entries[0].isIntersecting); }).observe(sentinel);
   }
 })();

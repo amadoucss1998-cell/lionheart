@@ -2,17 +2,12 @@
 <section class="hero">
   <div class="container">
     <div class="hero-copy">
-      <div class="eyebrow" data-anim="eyebrow"><span></span> Guangzhou &middot; Dubai &middot; Monrovia</div>
+      <div class="eyebrow" data-anim="eyebrow">Guangzhou, Dubai, Monrovia</div>
       <h1><span class="line-wrap"><span class="line">Sourced in <em>China</em>,</span></span><span class="line-wrap"><span class="line">delivered by Lionheart.</span></span></h1>
-      <p class="lead" data-anim="lead">One trusted partner between you and thousands of factories. We find the supplier, buy, inspect, ship and clear your goods.<span class="lead-more"> Or buy what we already hold in stock, ready to go.</span></p>
+      <p class="lead" data-anim="lead">One partner between you and thousands of Chinese factories. We source, buy, inspect, ship and clear your goods.</p>
       <div class="cta">
         <a class="btn btn-gold btn-lg" href="/products">Browse the catalog <%- icon('arrow', 18, 'arrow') %></a>
         <a class="btn btn-glass btn-lg" href="/request">Request a product</a>
-      </div>
-      <div class="hero-stats">
-        <div><strong data-count="<%= totals.products %>"><%= totals.products %></strong><span>Products listed</span></div>
-        <div><strong data-count="<%= totals.categories %>"><%= totals.categories %></strong><span>Categories</span></div>
-        <div><strong data-count="3">3</strong><span>Trade hubs</span></div>
       </div>
     </div>
     <div class="hero-visual">
@@ -37,14 +32,14 @@
 <div class="container">
   <div class="two-ways">
     <a class="way way-source" href="/products?mode=source">
-      <span class="way-num">01 — Factory direct</span>
+      <span class="way-num">Factory direct</span>
       <h3>Order directly from China</h3>
       <p>Factory prices on bulk and project orders. We handle the buying, the checks and the shipping.</p>
       <ul><li>Verified manufacturers, negotiated prices</li><li>Inspection before loading</li><li>Sea, air or RoRo to your port</li></ul>
       <span class="way-link">Shop factory-direct <%- icon('arrow', 16) %></span>
     </a>
     <a class="way way-stock" href="/products?mode=stock">
-      <span class="way-num">02 — Ready stock</span>
+      <span class="way-num">Ready stock</span>
       <h3>Buy from Lionheart stock</h3>
       <p>Goods already in our warehouse, available now, with no factory minimum order.</p>
       <ul><li>Faster delivery</li><li>Small quantities welcome</li><li>See it before you buy</li></ul>
@@ -54,9 +49,9 @@
 
   <section class="section">
     <div class="section-head">
-      <div><span class="kicker">The catalog</span><h2>Shop by category</h2></div>
+      <div><h2>Shop by category</h2></div>
       <div class="spacer"></div>
-      <a href="/products">View all products <%- icon('arrow', 16) %></a>
+      <a href="/products">Browse the catalog <%- icon('arrow', 16) %></a>
     </div>
     <div class="cat-grid">
       <% categoriesNav.forEach((c, i) => { %>
@@ -81,9 +76,9 @@
   <% if (featured.length) { %>
   <section class="section">
     <div class="section-head">
-      <div><span class="kicker">Selected for you</span><h2>Featured <em>products</em></h2></div>
+      <div><h2>Featured <em>products</em></h2></div>
       <div class="spacer"></div>
-      <a href="/products">See the full range <%- icon('arrow', 16) %></a>
+      <a href="/products">Browse the catalog <%- icon('arrow', 16) %></a>
     </div>
     <div class="product-grid<%= featured.length === 5 ? ' bento' : '' %>"><% featured.forEach(p => { %><%- include('partials/product-card', { p }) %><% }) %></div>
   </section>
@@ -91,29 +86,27 @@
 
   <section class="section">
     <div class="section-head">
-      <div><span class="kicker">Door to door</span><h2>Everything between the factory <em>and your site</em></h2></div>
-      <div class="spacer"></div>
-      <p>Clearing &amp; forwarding is our core business. We take care of each step so you deal with one team, not ten.</p>
+      <div><h2>Everything between the factory <em>and your site</em></h2><p class="section-lede">Clearing and forwarding is our core business. You deal with one team, not ten.</p></div>
     </div>
-    <div class="services">
-      <div class="service"><span class="n">01</span><%- icon('search', 26) %><h3>Sourcing</h3><p>We find and vet manufacturers for the exact specification, quantity and budget you need.</p></div>
-      <div class="service"><span class="n">02</span><%- icon('handshake', 26) %><h3>Purchasing</h3><p>We negotiate prices and terms, place the order and follow production for you.</p></div>
-      <div class="service"><span class="n">03</span><%- icon('scan', 26) %><h3>Quality inspection</h3><p>Goods are checked at our warehouse before loading, so you receive what you paid for.</p></div>
-      <div class="service"><span class="n">04</span><%- icon('layers', 26) %><h3>Consolidation</h3><p>Orders from several suppliers are combined and packed to save on freight.</p></div>
-      <div class="service"><span class="n">05</span><%- icon('ship', 26) %><h3>Freight</h3><p>Full or shared containers, air freight, or RoRo for vehicles and heavy machinery.</p></div>
-      <div class="service"><span class="n">06</span><%- icon('stamp', 26) %><h3>Customs &amp; delivery</h3><p>Documents, duties and clearing at the port, then delivery to your door or site.</p></div>
+    <div class="services bento">
+      <div class="service"><%- icon('search', 26) %><h3>Sourcing</h3><p>We find and vet manufacturers for the exact specification, quantity and budget you need.</p></div>
+      <div class="service"><%- icon('handshake', 26) %><h3>Purchasing</h3><p>We negotiate prices and terms, place the order and follow production for you.</p></div>
+      <div class="service"><%- icon('scan', 26) %><h3>Quality inspection</h3><p>Goods are checked at our warehouse before loading, so you receive what you paid for.</p></div>
+      <div class="service"><%- icon('layers', 26) %><h3>Consolidation</h3><p>Orders from several suppliers are combined and packed to save on freight.</p></div>
+      <div class="service"><%- icon('ship', 26) %><h3>Freight</h3><p>Full or shared containers, air freight, or RoRo for vehicles and heavy machinery.</p></div>
+      <div class="service"><%- icon('stamp', 26) %><h3>Customs &amp; delivery</h3><p>Documents, duties and clearing at the port, then delivery to your door or site.</p></div>
     </div>
   </section>
 
   <section class="section">
     <div class="section-head">
-      <div><span class="kicker">How ordering works</span><h2>From cart to container in <em>four steps</em></h2></div>
+      <div><h2>From cart to container in <em>four steps</em></h2></div>
       <div class="spacer"></div>
       <a href="/how-it-works">Learn more <%- icon('arrow', 16) %></a>
     </div>
     <div class="steps">
       <div class="st"><div class="si"><%- icon('cart') %></div><h3>Choose your products</h3><p>Pick China sourcing or ready stock for each item and set the quantity.</p></div>
-      <div class="st"><div class="si"><%- icon('clipboard') %></div><h3>Receive a quotation</h3><p>We confirm price, shipping and delivery time, usually within 24–48 hours.</p></div>
+      <div class="st"><div class="si"><%- icon('clipboard') %></div><h3>Receive a quotation</h3><p>We confirm price, shipping and delivery time, usually within 24 to 48 hours.</p></div>
       <div class="st"><div class="si"><%- icon('shield') %></div><h3>Accept &amp; pay</h3><p>Accept online. We purchase from the supplier and inspect your goods.</p></div>
       <div class="st"><div class="si"><%- icon('ship') %></div><h3>We ship &amp; deliver</h3><p>Freight, customs and delivery handled. Follow every step online.</p></div>
     </div>
@@ -122,7 +115,7 @@
   <% if (latest.length) { %>
   <section class="section">
     <div class="section-head">
-      <div><span class="kicker">Just arrived</span><h2>Newly <em>added</em></h2></div>
+      <div><h2>Newly <em>added</em></h2></div>
       <div class="spacer"></div>
       <a href="/products?sort=newest">See all <%- icon('arrow', 16) %></a>
     </div>
@@ -133,14 +126,14 @@
   <% if (testimonials.items.length) { %>
   <section class="section">
     <div class="section-head">
-      <div><span class="kicker">Customer reviews</span><h2>What our customers say</h2></div>
+      <div><h2>What our customers say</h2></div>
       <div class="spacer"></div>
       <div class="rating-summary">
         <strong><%= testimonials.stats.average.toFixed(1) %></strong>
         <div><%- include('partials/stars', { rating: testimonials.stats.average, size: 18 }) %><span><%= testimonials.stats.count %> review<%= testimonials.stats.count === 1 ? '' : 's' %></span></div>
       </div>
     </div>
-    <div class="reviews-grid">
+    <div class="reviews-grid<%= testimonials.items.length === 5 ? ' bento' : '' %>">
       <% testimonials.items.forEach(r => { %>
         <figure class="review">
           <div class="row" style="gap:10px"><%- include('partials/stars', { rating: r.rating }) %><% if (r.source === 'sample') { %><span class="tag tag-muted" title="Example review for this demo">Sample</span><% } %></div>
@@ -158,7 +151,6 @@
   <section class="section faq-section">
     <div class="faq-layout">
       <div>
-        <span class="kicker">Questions</span>
         <h2>Before you <em>order</em></h2>
         <p class="muted">Anything else? Our team answers on WhatsApp and email.</p>
         <% if (settings.whatsapp) { %><a class="btn btn-ghost mt-2" href="https://wa.me/<%= settings.whatsapp.replace(/\D/g, '') %>" target="_blank" rel="noopener"><%- icon('chat', 18) %> Ask us on WhatsApp</a><% } %>
@@ -177,9 +169,10 @@
 
   <div class="cta-band">
     <div><h2>Need something that's <em>not listed</em>?</h2><p>Send us a photo or a description. Our team in China will find the manufacturer and come back with prices and options.</p></div>
-    <div class="spacer"></div>
-    <a class="btn btn-gold btn-lg" href="/request">Request a product <%- icon('arrow', 18, 'arrow') %></a>
-    <% if (settings.whatsapp) { %><a class="btn btn-glass btn-lg" href="https://wa.me/<%= settings.whatsapp.replace(/\D/g, '') %>" target="_blank" rel="noopener"><%- icon('chat') %> WhatsApp us</a><% } %>
+    <div class="cta-actions">
+      <a class="btn btn-gold btn-lg" href="/request">Request a product <%- icon('arrow', 18, 'arrow') %></a>
+      <% if (settings.whatsapp) { %><a class="btn btn-ghost btn-lg" href="https://wa.me/<%= settings.whatsapp.replace(/\D/g, '') %>" target="_blank" rel="noopener"><%- icon('chat') %> Ask us on WhatsApp</a><% } %>
+    </div>
   </div>
 </div>
 <%- include('partials/footer') %>

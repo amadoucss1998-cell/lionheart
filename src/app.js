@@ -76,7 +76,7 @@ function createApp() {
   const vendor = (dir) => express.static(path.join(__dirname, '..', 'node_modules', dir), { maxAge: '7d' });
   app.use('/vendor/gsap', vendor('gsap/dist'));
   // Self-hosted fonts (no Google Fonts request, works offline and under strict CSP).
-  for (const dir of ['@fontsource-variable/fraunces/files', '@fontsource/instrument-sans/files', '@fontsource/jetbrains-mono/files']) {
+  for (const dir of ['@fontsource-variable/schibsted-grotesk/files', '@fontsource/jetbrains-mono/files']) {
     app.use('/vendor/fonts', vendor(dir));
   }
   // public/ is served as-is (on Vercel its CDN serves these files directly).

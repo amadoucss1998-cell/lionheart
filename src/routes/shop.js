@@ -28,7 +28,7 @@ router.get('/', async (req, res) => {
       listProducts({ featured: true, limit: 5 }).then((r) => r.items),
       listProducts({ sort: 'newest', limit: 8 }).then((r) => r.items),
       db.all('SELECT category_id, COUNT(*)::int AS n FROM products WHERE active = 1 GROUP BY category_id'),
-      reviews.approvedReviews(6),
+      reviews.approvedReviews(5),
     ])
   );
   const counts = Object.fromEntries(countRows.map((r) => [r.category_id, r.n]));

@@ -9,7 +9,7 @@ const CATEGORIES = [
   ['Electronics', 'cpu', 'Phones, laptops, TVs, appliances and accessories.'],
   ['Machinery', 'cog', 'Production lines, block machines, generators, pumps and workshop tools.'],
   ['Heavy Equipment', 'truck', 'Excavators, loaders, bulldozers, cranes and trucks.'],
-  ['Vehicles', 'car', 'Cars, SUVs, pickups, buses and motorcycles — new and used.'],
+  ['Vehicles', 'car', 'Cars, SUVs, pickups, buses and motorcycles, new and used.'],
   ['Furniture', 'sofa', 'Home, office, hotel and school furniture.'],
   ['Building Materials', 'bricks', 'Cement, steel, rebar, plywood, paint, pipes and more.'],
   ['Tiles & Ceramics', 'grid', 'Floor and wall tiles, porcelain, granite and marble.'],
