@@ -297,8 +297,11 @@ textarea { min-height: 100px; resize: vertical; }
 @media (min-width: 1001px) {
   .product-grid.bento { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .bento .pcard:first-child { grid-column: span 2; grid-row: span 2; }
-  .bento .pcard:first-child .thumb { aspect-ratio: auto; flex: 1; min-height: 320px; }
-  .bento .pcard:first-child .pbody { flex: 0 0 auto; }
+  /* Photo row takes the spare height, text sits right under it. The image is
+     positioned, so its own size never pushes the text away (Safari). */
+  .bento .pcard:first-child { display: grid; grid-template-rows: minmax(320px, 1fr) auto; }
+  .bento .pcard:first-child .thumb { aspect-ratio: auto; height: 100%; min-height: 320px; }
+  .bento .pcard:first-child .thumb > img, .bento .pcard:first-child .thumb > .placeholder { position: absolute; inset: 0; }
   .bento .pcard:first-child h3 { font-size: 1.75rem; letter-spacing: -.03em; }
   .bento .pcard:first-child .prices { grid-template-columns: auto auto 1fr; gap: 10px 36px; }
   .bento .pcard:first-child .price { font-size: 1.15rem; }

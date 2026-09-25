@@ -48,7 +48,7 @@ test('start-up cleanup removes only sample products that have no photo', async (
   await db.run("INSERT INTO products (sku, name, slug) VALUES ('OWN-1', 'Own product', 'own-product')");
   // An order referencing a product that will be removed keeps its line.
   const order = await db.insert("INSERT INTO orders (ref, customer_name, email) VALUES ('LH-TEST-1', 'A', 'a@b.c')");
-  const tile = await db.get("SELECT id, name FROM products WHERE sku = 'TL-6060-P'");
+  const tile = await db.get("SELECT id, name FROM products WHERE sku = 'TL-3060-W'");
   await db.run("INSERT INTO order_items (order_id, product_id, product_name, mode, qty) VALUES (?, ?, ?, 'source', 10)", [order, tile.id, tile.name]);
 
   process.env.SEED_DEMO = 'true';
@@ -59,9 +59,9 @@ test('start-up cleanup removes only sample products that have no photo', async (
   assert.deepStrictEqual(item, { product_id: null, product_name: tile.name });
 
   // Runs only once: a sample re-added later is not deleted again.
-  await db.run("INSERT INTO products (sku, name, slug) VALUES ('TL-6060-P', 'Tile again', 'tile-again')");
+  await db.run("INSERT INTO products (sku, name, slug) VALUES ('TL-3060-W', 'Tile again', 'tile-again')");
   await seed.removeSamplesWithoutPhotos();
-  assert.ok((await skus()).includes('TL-6060-P'));
+  assert.ok((await skus()).includes('TL-3060-W'));
 });
 
 test('admins can delete all products without photos in one step', async () => {
