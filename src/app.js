@@ -6,7 +6,7 @@ const compression = require('compression');
 const { locals, csrfGlobal, assetUrl } = require('./middleware');
 const { i18n } = require('./i18n');
 const { rateLimit } = require('./rate-limit');
-const { db } = require('./db');
+const { db, explainDbError } = require('./db');
 const { bootstrap } = require('./seed');
 const storage = require('./storage');
 
@@ -74,8 +74,8 @@ function createApp() {
       await db.get('SELECT 1 AS ok');
       res.set('Cache-Control', 'no-store').json({ ok: true, database: db.kind, storage: storage.useSupabase ? 'supabase' : 'local' });
     } catch (err) {
-      console.error('[healthz]', err.message);
-      res.status(503).set('Cache-Control', 'no-store').json({ ok: false });
+      console.error('[healthz]', err.code || '', err.message);
+      res.status(503).set('Cache-Control', 'no-store').json({ ok: false, problem: explainDbError(err) });
     }
   });
   app.use(compression());
@@ -98,7 +98,7 @@ function createApp() {
     try {
       await bootstrap();
     } catch (err) {
-      console.error('[startup] Could not reach the database:', err.message);
+      console.error('[startup] Could not reach the database:', err.code || '', err.message, '→', explainDbError(err));
       return res.status(503).set({ 'Retry-After': '30', 'Cache-Control': 'no-store' }).type('html').send(UNAVAILABLE_PAGE);
     }
     next();

@@ -347,6 +347,23 @@ const DEFAULT_SETTINGS = {
     'Sourcing orders normally require a deposit before we purchase from the factory; the balance is due before shipping.',
 };
 
+// A short, safe explanation of why the database could not be used (no
+// passwords or addresses), shown by /healthz and in the logs.
+function explainDbError(err) {
+  const msg = String((err && err.message) || '');
+  const code = err && err.code;
+  if (code === 'ENOTFOUND' || code === 'EAI_AGAIN') return 'Database host not found: check the host in DATABASE_URL (copy it again from Supabase → Connect).';
+  if (code === '28P01' || /password authentication failed/i.test(msg)) return 'Wrong database password in DATABASE_URL.';
+  if (/tenant or user not found/i.test(msg)) return 'Supabase does not recognise this project/user: copy the "Transaction pooler" string again from Supabase → Connect.';
+  if (code === 'ECONNREFUSED') return 'Database refused the connection: wrong port or the project is not running.';
+  if (code === 'ETIMEDOUT' || /timeout/i.test(msg)) return 'Database did not answer in time: the Supabase project may still be starting or paused.';
+  if (/circuit breaker|too many|max client|remaining connection slots/i.test(msg)) return 'Database has too many connections or is blocking repeated failed logins; wait a few minutes.';
+  if (/ssl|certificate/i.test(msg)) return 'Secure connection to the database failed (SSL).';
+  if (code === '3D000' || /database .* does not exist/i.test(msg)) return 'The database name in DATABASE_URL does not exist (it should usually be "postgres").';
+  if (code === '42501' || /permission denied/i.test(msg)) return 'The database user lacks permission to create or read the tables.';
+  return `Database error${code ? ` (${code})` : ''}.`;
+}
+
 // Creates tables and default settings. Safe to run on every start / cold start:
 // an advisory lock stops two starting instances from migrating at the same time.
 let initPromise;
@@ -393,4 +410,4 @@ function clearSettingsCache() {
   settingsCache = null;
 }
 
-module.exports = { db, initDb, getSettings, setSetting, clearSettingsCache, DATA_DIR, DEFAULT_SETTINGS, SCHEMA, translate };
+module.exports = { db, initDb, explainDbError, getSettings, setSetting, clearSettingsCache, DATA_DIR, DEFAULT_SETTINGS, SCHEMA, translate };
