@@ -361,7 +361,16 @@ function explainDbError(err) {
   if (/ssl|certificate/i.test(msg)) return 'Secure connection to the database failed (SSL).';
   if (code === '3D000' || /database .* does not exist/i.test(msg)) return 'The database name in DATABASE_URL does not exist (it should usually be "postgres").';
   if (code === '42501' || /permission denied/i.test(msg)) return 'The database user lacks permission to create or read the tables.';
-  return `Database error${code ? ` (${code})` : ''}.`;
+  if (/EDBHANDLEREXITED|connection to database closed|database is starting|not yet accepting/i.test(msg)) return 'Supabase\'s connection pooler cannot reach the database yet: it is still starting after being restored. Wait a few minutes, or restart the project in Supabase.';
+  if (/ENOTFOUND|not found/i.test(msg)) return 'Supabase does not recognise this project/user: copy the "Transaction pooler" string again from Supabase → Connect.';
+  if (/auth/i.test(msg)) return 'Database login failed: check the user and password in DATABASE_URL.';
+  // Anything else: the message itself, with names, addresses and numbers hidden.
+  const safe = msg
+    .replace(/postgres(ql)?:\/\/\S+/gi, '…')
+    .replace(/\b[\w-]+(\.[\w-]+)+\b/g, '…')
+    .replace(/"[^"]*"|'[^']*'/g, '…')
+    .slice(0, 160);
+  return `Database error${code ? ` (${code})` : ''}: ${safe}`;
 }
 
 // Creates tables and default settings. Safe to run on every start / cold start:
