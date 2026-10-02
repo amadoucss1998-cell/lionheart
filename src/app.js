@@ -10,6 +10,12 @@ const { db } = require('./db');
 const { bootstrap } = require('./seed');
 const storage = require('./storage');
 
+// Shown when the database is unreachable or the normal error page can't be built.
+const UNAVAILABLE_PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lionheart Trade</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;font:16px/1.5 system-ui,sans-serif;background:#fff;color:#0d1824;padding:16px}
+main{max-width:420px;text-align:center}h1{font-size:1.4rem;margin:0 0 .5rem}p{color:#4a5563;margin:0 0 1.25rem}a{display:inline-block;padding:.65rem 1.4rem;border-radius:999px;background:#0d1824;color:#fff;text-decoration:none}</style></head>
+<body><main><h1>We'll be right back</h1><p>The site is having a short technical problem. Please try again in a minute.</p><a href="/">Try again</a></main></body></html>`;
+
 function createApp() {
   const app = express();
   app.set('view engine', 'ejs');
@@ -86,8 +92,15 @@ function createApp() {
 
   // Make sure tables, the admin account and settings exist before handling
   // requests (runs once per process / serverless instance).
+  // If the database can't be reached (e.g. a paused Supabase project or a wrong
+  // DATABASE_URL), visitors get a plain "back soon" page and the logs say why.
   app.use(async (req, res, next) => {
-    await bootstrap();
+    try {
+      await bootstrap();
+    } catch (err) {
+      console.error('[startup] Could not reach the database:', err.message);
+      return res.status(503).set({ 'Retry-After': '30', 'Cache-Control': 'no-store' }).type('html').send(UNAVAILABLE_PAGE);
+    }
     next();
   });
   app.use(express.urlencoded({ extended: false, limit: '1mb', parameterLimit: 5000 }));
@@ -127,7 +140,10 @@ function createApp() {
     }
     if (err.status === 404 && req.path.startsWith('/uploads/')) return res.status(404).end();
     console.error(err);
-    res.status(500).render('error', { title: 'Something went wrong', message: 'An unexpected error occurred. Please try again.' });
+    res.status(500).render('error', { title: 'Something went wrong', message: 'An unexpected error occurred. Please try again.' }, (renderErr, html) => {
+      if (renderErr) console.error('[error page]', renderErr.message);
+      res.type('html').send(renderErr ? UNAVAILABLE_PAGE : html);
+    });
   });
 
   return app;
